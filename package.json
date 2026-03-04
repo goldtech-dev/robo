@@ -1,0 +1,17 @@
+{
+  "name": "robo_leilao",
+  "version": "1.0.0",
+  "description": "Robo de atualização de leilões",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node server.js"
+  },
+  "author": "Vinicius",
+  "license": "ISC",
+  "dependencies": {
+    "chromedriver": "^146.0.0",
+    "express": "^5.2.1",
+    "multer": "^2.1.1",
+    "selenium-webdriver": "^4.41.0"
+  }
+}

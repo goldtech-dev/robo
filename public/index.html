@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Robô Leilão</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 40px 16px; }
+    .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,.1); width: 100%; max-width: 560px; overflow: hidden; }
+    .card-header { background: #b8860b; color: #fff; padding: 18px 24px; font-size: 1.2rem; font-weight: bold; }
+    .card-body { padding: 24px; }
+
+    label { display: block; font-size: .85rem; color: #555; margin-bottom: 4px; margin-top: 16px; }
+    label:first-child { margin-top: 0; }
+    input[type=text], input[type=password], input[type=file] {
+      width: 100%; padding: 9px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: .95rem;
+    }
+    input[type=file] { padding: 6px; }
+
+    .msg-erro {
+      display: none; margin-top: 12px; padding: 10px 14px;
+      background: #fdecea; border: 1px solid #f5c6cb; border-radius: 4px;
+      color: #c62828; font-size: .88rem;
+    }
+
+    /* Confirmação */
+    #secaoConfirmacao {
+      display: none; margin-top: 20px; padding: 16px;
+      background: #fff8e1; border: 1px solid #ffe082; border-radius: 6px;
+    }
+    #secaoConfirmacao p { font-size: .95rem; color: #555; margin-bottom: 14px; }
+    #secaoConfirmacao strong { color: #333; }
+    .btn-row { display: flex; gap: 10px; }
+    .btn-confirmar {
+      flex: 1; padding: 10px; background: #2e7d32; color: #fff;
+      border: none; border-radius: 4px; font-size: .95rem; cursor: pointer; font-weight: bold;
+    }
+    .btn-confirmar:hover { background: #1b5e20; }
+    .btn-cancelar {
+      flex: 1; padding: 10px; background: #eee; color: #333;
+      border: none; border-radius: 4px; font-size: .95rem; cursor: pointer;
+    }
+    .btn-cancelar:hover { background: #ddd; }
+
+    button#btnValidar {
+      margin-top: 20px; width: 100%; padding: 11px; background: #b8860b; color: #fff;
+      border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; font-weight: bold;
+    }
+    button#btnValidar:disabled { background: #ccc; cursor: not-allowed; }
+    button#btnValidar:hover:not(:disabled) { background: #9a700a; }
+
+    /* Progresso */
+    #secaoProgresso { display: none; margin-top: 24px; border-top: 1px solid #eee; padding-top: 20px; }
+    #statusMsg { font-size: .9rem; color: #555; margin-bottom: 10px; }
+    progress { width: 100%; height: 16px; border-radius: 4px; appearance: none; }
+    progress::-webkit-progress-bar { background: #eee; border-radius: 4px; }
+    progress::-webkit-progress-value { background: #b8860b; border-radius: 4px; }
+    #contadores { font-size: .85rem; color: #555; text-align: right; margin-top: 4px; }
+
+    #log {
+      margin-top: 14px; height: 240px; overflow-y: auto; background: #1e1e1e;
+      color: #d4d4d4; font-family: monospace; font-size: .82rem;
+      padding: 10px 12px; border-radius: 4px;
+    }
+    .log-sucesso { color: #4ec9b0; }
+    .log-erro    { color: #f44747; }
+    .log-aviso   { color: #dcdcaa; }
+    .log-info    { color: #9cdcfe; }
+
+    #btnDownload {
+      display: none; margin-top: 16px; width: 100%; padding: 10px;
+      background: #2e7d32; color: #fff; border: none; border-radius: 4px;
+      font-size: .95rem; cursor: pointer; font-weight: bold;
+    }
+    #btnDownload:hover { background: #1b5e20; }
+    #resumoFinal { display: none; margin-top: 12px; font-size: .9rem; font-weight: bold; text-align: center; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">🤖 Robô Leilão</div>
+  <div class="card-body">
+
+    <!-- Etapa 1: formulário -->
+    <form id="form">
+      <label>Usuário</label>
+      <input type="text" name="username" placeholder="Ex: BARAUJO" required />
+
+      <label>Senha</label>
+      <input type="password" name="password" required />
+
+      <label>Número do Leilão (origem)</label>
+      <input type="text" name="numeroLeilao" placeholder="Ex: 59415" required />
+
+      <label>Arquivo CSV</label>
+      <input type="file" name="csv" accept=".csv" required />
+
+      <div class="msg-erro" id="msgErro"></div>
+
+      <button type="submit" id="btnValidar">Carregar e Validar CSV</button>
+    </form>
+
+    <!-- Etapa 2: confirmação -->
+    <div id="secaoConfirmacao">
+      <p>CSV validado com sucesso. <strong id="txtTotal"></strong></p>
+      <p>Deseja iniciar o robô agora? O Chrome será aberto automaticamente.</p>
+      <div class="btn-row">
+        <button class="btn-confirmar" id="btnConfirmar">✔ Sim, iniciar o robô</button>
+        <button class="btn-cancelar" id="btnCancelar">✖ Cancelar</button>
+      </div>
+    </div>
+
+    <!-- Etapa 3: progresso -->
+    <div id="secaoProgresso">
+      <div id="statusMsg">Aguardando...</div>
+      <progress id="barra" value="0" max="100"></progress>
+      <div id="contadores">0 / 0</div>
+      <div id="log"></div>
+      <div id="resumoFinal"></div>
+      <button id="btnDownload">⬇ Baixar Relatório CSV</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const form           = document.getElementById("form");
+  const btnValidar     = document.getElementById("btnValidar");
+  const msgErro        = document.getElementById("msgErro");
+  const secaoConf      = document.getElementById("secaoConfirmacao");
+  const txtTotal       = document.getElementById("txtTotal");
+  const btnConfirmar   = document.getElementById("btnConfirmar");
+  const btnCancelar    = document.getElementById("btnCancelar");
+  const secaoProgresso = document.getElementById("secaoProgresso");
+  const statusMsg      = document.getElementById("statusMsg");
+  const barra          = document.getElementById("barra");
+  const contadores     = document.getElementById("contadores");
+  const log            = document.getElementById("log");
+  const btnDownload    = document.getElementById("btnDownload");
+  const resumoFinal    = document.getElementById("resumoFinal");
+
+  let relatorioCSV = "";
+
+  function mostrarErro(msg) {
+    msgErro.textContent = msg;
+    msgErro.style.display = "block";
+  }
+
+  function limparErro() {
+    msgErro.style.display = "none";
+    msgErro.textContent = "";
+  }
+
+  function addLog(texto, classe) {
+    const linha = document.createElement("div");
+    linha.className = classe || "";
+    linha.textContent = texto;
+    log.appendChild(linha);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  // Etapa 1 — validar CSV
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    limparErro();
+    btnValidar.disabled = true;
+    btnValidar.textContent = "Validando...";
+
+    const data = new FormData(form);
+    try {
+      const resp = await fetch("/validar", { method: "POST", body: data });
+      const json = await resp.json();
+
+      if (!resp.ok || json.erro) {
+        mostrarErro(json.erro || "Erro desconhecido.");
+        btnValidar.disabled = false;
+        btnValidar.textContent = "Carregar e Validar CSV";
+        return;
+      }
+
+      // Mostra confirmação
+      txtTotal.textContent = `${json.total} lote(s) encontrado(s).`;
+      secaoConf.style.display = "block";
+      btnValidar.disabled = false;
+      btnValidar.textContent = "Carregar e Validar CSV";
+    } catch (err) {
+      mostrarErro("Erro de conexão: " + err.message);
+      btnValidar.disabled = false;
+      btnValidar.textContent = "Carregar e Validar CSV";
+    }
+  });
+
+  // Cancelar — esconde confirmação
+  btnCancelar.addEventListener("click", () => {
+    secaoConf.style.display = "none";
+  });
+
+  // Etapa 2 — confirmar e iniciar Chrome
+  btnConfirmar.addEventListener("click", async () => {
+    secaoConf.style.display = "none";
+    log.innerHTML = "";
+    barra.value = 0;
+    contadores.textContent = "0 / 0";
+    resumoFinal.style.display = "none";
+    btnDownload.style.display = "none";
+    relatorioCSV = "";
+    secaoProgresso.style.display = "block";
+    statusMsg.textContent = "Iniciando...";
+    btnConfirmar.disabled = true;
+
+    // Conectar SSE antes de chamar /iniciar
+    const sse = new EventSource("/progresso");
+    sse.onmessage = (e) => {
+      const d = JSON.parse(e.data);
+
+      if (d.tipo === "status") {
+        statusMsg.textContent = d.msg;
+        addLog(d.msg, "log-info");
+
+      } else if (d.tipo === "progresso") {
+        statusMsg.textContent = `[${d.indice}/${d.total}] Processando: ${d.descricao}`;
+
+      } else if (d.tipo === "lote") {
+        const pct = Math.round((d.indice / d.total) * 100);
+        barra.value = pct;
+        contadores.textContent = `${d.indice} / ${d.total}`;
+        if (d.status === "sucesso") {
+          addLog(`✓ [${d.indice}/${d.total}] ${d.descricao}`, "log-sucesso");
+        } else {
+          addLog(`⚠ [${d.indice}/${d.total}] ${d.descricao} — ${d.motivo}`, "log-erro");
+        }
+
+      } else if (d.tipo === "erro_fatal") {
+        addLog("ERRO FATAL: " + d.msg, "log-erro");
+        statusMsg.textContent = "Erro fatal. Veja o log.";
+        sse.close();
+        btnConfirmar.disabled = false;
+
+      } else if (d.tipo === "fim") {
+        barra.value = 100;
+        statusMsg.textContent = "Concluído!";
+        relatorioCSV = d.relatorioCSV;
+        resumoFinal.style.display = "block";
+        resumoFinal.innerHTML = `✓ Sucesso: <span style="color:#2e7d32">${d.sucesso}</span> &nbsp;|&nbsp; ✗ Erros: <span style="color:#c62828">${d.erros}</span>`;
+        btnDownload.style.display = "block";
+        addLog(`\nFinalizado! Sucesso: ${d.sucesso} | Erros: ${d.erros}`, "log-aviso");
+        sse.close();
+        btnConfirmar.disabled = false;
+      }
+    };
+
+    sse.onerror = () => {
+      addLog("Conexão SSE perdida.", "log-erro");
+      sse.close();
+      btnConfirmar.disabled = false;
+    };
+
+    try {
+      const resp = await fetch("/iniciar", { method: "POST" });
+      const json = await resp.json();
+      if (!resp.ok || json.erro) {
+        addLog("Erro ao iniciar: " + (json.erro || "falha"), "log-erro");
+        sse.close();
+        btnConfirmar.disabled = false;
+      }
+    } catch (err) {
+      addLog("Erro de conexão: " + err.message, "log-erro");
+      sse.close();
+      btnConfirmar.disabled = false;
+    }
+  });
+
+  btnDownload.addEventListener("click", () => {
+    const blob = new Blob(["\uFEFF" + relatorioCSV], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `relatorio_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+</script>
+</body>
+</html>
