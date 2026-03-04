@@ -163,7 +163,7 @@ app.post("/iniciar", (req, res) => {
   })();
 });
 
-const PORT = 4000;
-app.listen(PORT, () => {
+const PORT = 9876;
+app.listen(PORT, "127.0.0.1", () => {
   console.log(`Robô Leilão rodando em http://localhost:${PORT}`);
 });

@@ -132,7 +132,12 @@ async function processarLote(driver, item) {
   return sucesso;
 }
 
-const CAMPOS_CSV_OBRIGATORIOS = ["Lote", "Dia", "MiniDescrição", "NumeroLeilao"];
+const CAMPOS_CSV_OBRIGATORIOS = [
+  "Lote",
+  "Dia",
+  "MiniDescrição",
+  "NumeroLeilao",
+];
 
 function validarHeaderCSV(lotes) {
   if (lotes.length === 0) return "O CSV não contém dados.";
@@ -144,4 +149,12 @@ function validarHeaderCSV(lotes) {
   return null;
 }
 
-module.exports = { lerCSV, lerCSVBuffer, validarHeaderCSV, criarDriver, fazerLogin, processarLote, DELAY_ENTRE_ITENS };
+module.exports = {
+  lerCSV,
+  lerCSVBuffer,
+  validarHeaderCSV,
+  criarDriver,
+  fazerLogin,
+  processarLote,
+  DELAY_ENTRE_ITENS,
+};
