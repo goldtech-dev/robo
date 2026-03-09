@@ -98,7 +98,7 @@ app.post("/iniciar", (req, res) => {
           tipo: "progresso",
           indice: i + 1,
           total: lotes.length,
-          descricao: item.MiniDescrição,
+          descricao: item.mini_descricao,
         });
 
         try {
@@ -109,7 +109,7 @@ app.post("/iniciar", (req, res) => {
               tipo: "lote",
               indice: i + 1,
               total: lotes.length,
-              descricao: item.MiniDescrição,
+              descricao: item.mini_descricao,
               status: "sucesso",
             });
           } else {
@@ -118,7 +118,7 @@ app.post("/iniciar", (req, res) => {
               tipo: "lote",
               indice: i + 1,
               total: lotes.length,
-              descricao: item.MiniDescrição,
+              descricao: item.mini_descricao,
               status: "erro",
               motivo: "servidor retornou erro",
             });
@@ -129,7 +129,7 @@ app.post("/iniciar", (req, res) => {
             tipo: "lote",
             indice: i + 1,
             total: lotes.length,
-            descricao: item.MiniDescrição,
+            descricao: item.mini_descricao,
             status: "erro",
             motivo: e.message,
           });
@@ -144,13 +144,13 @@ app.post("/iniciar", (req, res) => {
     }
 
     const linhas = [
-      "Status,Lote,MiniDescrição,NumeroLeilao,Motivo",
+      "Status,lote,mini_descricao,numero_leilao,Motivo",
       ...resultados.sucesso.map(
-        (r) => `sucesso,${r.Lote},${r.MiniDescrição},${r.NumeroLeilao},`,
+        (r) => `sucesso,${r.lote},${r.mini_descricao},${r.numero_leilao},`,
       ),
       ...resultados.erro.map(
         (r) =>
-          `erro,${r.Lote},${r.MiniDescrição},${r.NumeroLeilao},"${r.motivo}"`,
+          `erro,${r.lote},${r.mini_descricao},${r.numero_leilao},"${r.motivo}"`,
       ),
     ];
 

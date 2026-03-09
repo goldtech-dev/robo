@@ -66,7 +66,7 @@ async function processarLote(driver, item) {
   // 1. Pesquisar pela MiniDescrição
   const campoBusca = await driver.findElement(By.id("Descricao"));
   await campoBusca.clear();
-  await campoBusca.sendKeys(item.MiniDescrição);
+  await campoBusca.sendKeys(item.mini_descricao);
 
   // 2. Clicar em Pesquisar
   await driver
@@ -90,15 +90,15 @@ async function processarLote(driver, item) {
   // 6. Preencher campos do modal
   const inputLeilao = await driver.findElement(By.id("expleilao"));
   await inputLeilao.clear();
-  await inputLeilao.sendKeys(String(item.NumeroLeilao));
+  await inputLeilao.sendKeys(String(item.numero_leilao));
 
   const inputLote = await driver.findElement(By.id("explote"));
   await inputLote.clear();
-  await inputLote.sendKeys(String(item.Lote));
+  await inputLote.sendKeys(String(item.lote));
 
   const inputDia = await driver.findElement(By.id("expdia"));
   await inputDia.clear();
-  await inputDia.sendKeys(String(item.Dia));
+  await inputDia.sendKeys(String(item.dia));
 
   // 7. Confirmar exportação
   await driver
@@ -133,10 +133,10 @@ async function processarLote(driver, item) {
 }
 
 const CAMPOS_CSV_OBRIGATORIOS = [
-  "Lote",
-  "Dia",
-  "MiniDescrição",
-  "NumeroLeilao",
+  "lote",
+  "dia",
+  "mini_descricao",
+  "numero_leilao",
 ];
 
 function validarHeaderCSV(lotes) {
