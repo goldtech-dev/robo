@@ -6,15 +6,25 @@ require("chromedriver");
 const URL_LOGIN = "https://leiloesbr.com.br/painel_lbr/";
 const DELAY_ENTRE_ITENS = 2000;
 
+function normalizarHeader(h) {
+  return h
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_");
+}
+
 function lerCSV(path) {
   const content = fs
     .readFileSync(path, "utf-8")
     .replace(/^\uFEFF/, "") // remove BOM UTF-8
     .replace(/\r/g, ""); // normaliza quebras de linha Windows
   const lines = content.trim().split("\n");
-  const headers = lines[0].split(",").map((h) => h.trim());
+  const sep = lines[0].includes(";") ? ";" : ",";
+  const headers = lines[0].split(sep).map(normalizarHeader);
   return lines.slice(1).map((line) => {
-    const values = line.split(",");
+    const values = line.split(sep);
     return Object.fromEntries(headers.map((h, i) => [h, values[i]?.trim()]));
   });
 }
@@ -25,9 +35,10 @@ function lerCSVBuffer(buffer) {
     .replace(/^\uFEFF/, "")
     .replace(/\r/g, "");
   const lines = content.trim().split("\n");
-  const headers = lines[0].split(",").map((h) => h.trim());
+  const sep = lines[0].includes(";") ? ";" : ",";
+  const headers = lines[0].split(sep).map(normalizarHeader);
   return lines.slice(1).map((line) => {
-    const values = line.split(",");
+    const values = line.split(sep);
     return Object.fromEntries(headers.map((h, i) => [h, values[i]?.trim()]));
   });
 }
