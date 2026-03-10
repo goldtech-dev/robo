@@ -4,7 +4,7 @@ const fs = require("fs");
 require("chromedriver");
 
 const URL_LOGIN = "https://leiloesbr.com.br/painel_lbr/";
-const DELAY_ENTRE_ITENS = 2000;
+const DELAY_ENTRE_ITENS = 1500;
 
 function normalizarHeader(h) {
   return h
@@ -43,11 +43,35 @@ function lerCSVBuffer(buffer) {
   });
 }
 
+function encontrarChrome() {
+  const { execSync } = require("child_process");
+  let winUser = "";
+  try {
+    winUser = execSync("cmd.exe /c echo %USERNAME%", {
+      encoding: "utf-8",
+      stderr: "ignore",
+    }).trim();
+  } catch (_) {}
+
+  const caminhos = [
+    "/mnt/c/Program Files/Google/Chrome/Application/chrome.exe",
+    "/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe",
+    winUser
+      ? `/mnt/c/Users/${winUser}/AppData/Local/Google/Chrome/Application/chrome.exe`
+      : "",
+  ].filter(Boolean);
+
+  for (const p of caminhos) {
+    if (fs.existsSync(p)) return p;
+  }
+  throw new Error(
+    "Chrome não encontrado. Caminhos tentados: " + caminhos.join(", "),
+  );
+}
+
 function criarDriver() {
   const options = new chrome.Options();
-  options.setChromeBinaryPath(
-    "/mnt/c/Program Files/Google/Chrome/Application/chrome.exe",
-  );
+  options.setChromeBinaryPath(encontrarChrome());
   options.addArguments("--start-maximized");
   options.addArguments("--window-position=0,0");
   options.addArguments("--window-size=1920,1080");
