@@ -1,7 +1,6 @@
 const { Builder, By, until } = require("selenium-webdriver");
 const chrome = require("selenium-webdriver/chrome");
 const fs = require("fs");
-require("chromedriver");
 
 const URL_LOGIN = "https://leiloesbr.com.br/painel_lbr/";
 const DELAY_ENTRE_ITENS = 1500;
@@ -44,22 +43,35 @@ function lerCSVBuffer(buffer) {
 }
 
 function encontrarChrome() {
-  const { execSync } = require("child_process");
-  let winUser = "";
-  try {
-    winUser = execSync("cmd.exe /c echo %USERNAME%", {
-      encoding: "utf-8",
-      stderr: "ignore",
-    }).trim();
-  } catch (_) {}
+  const isWindows = process.platform === "win32";
 
-  const caminhos = [
-    "/mnt/c/Program Files/Google/Chrome/Application/chrome.exe",
-    "/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe",
-    winUser
-      ? `/mnt/c/Users/${winUser}/AppData/Local/Google/Chrome/Application/chrome.exe`
-      : "",
-  ].filter(Boolean);
+  let caminhos;
+  if (isWindows) {
+    const pf = process.env["ProgramFiles"] || "C:\\Program Files";
+    const pf86 = process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)";
+    const local = process.env["LOCALAPPDATA"] || "";
+    caminhos = [
+      `${pf}\\Google\\Chrome\\Application\\chrome.exe`,
+      `${pf86}\\Google\\Chrome\\Application\\chrome.exe`,
+      local ? `${local}\\Google\\Chrome\\Application\\chrome.exe` : "",
+    ].filter(Boolean);
+  } else {
+    const { execSync } = require("child_process");
+    let winUser = "";
+    try {
+      winUser = execSync("cmd.exe /c echo %USERNAME%", {
+        encoding: "utf-8",
+        stdio: ["pipe", "pipe", "ignore"],
+      }).trim();
+    } catch (_) {}
+    caminhos = [
+      "/mnt/c/Program Files/Google/Chrome/Application/chrome.exe",
+      "/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe",
+      winUser
+        ? `/mnt/c/Users/${winUser}/AppData/Local/Google/Chrome/Application/chrome.exe`
+        : "",
+    ].filter(Boolean);
+  }
 
   for (const p of caminhos) {
     if (fs.existsSync(p)) return p;
