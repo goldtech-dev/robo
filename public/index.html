@@ -24,13 +24,60 @@
         max-width: 560px;
         overflow: hidden;
       }
-      .card-header {
-        background: #b8860b;
-        color: #fff;
-        padding: 18px 24px;
-        font-size: 1.2rem;
-        font-weight: bold;
+
+      /* ── Seletor de robô ── */
+      .robo-selector {
+        display: flex;
+        border-bottom: 1px solid #e0e0e0;
       }
+      .robo-tab {
+        flex: 1;
+        padding: 16px 12px;
+        text-align: center;
+        font-size: 0.95rem;
+        font-weight: bold;
+        cursor: pointer;
+        border: none;
+        background: #f5f5f5;
+        color: #666;
+        transition:
+          background 0.2s,
+          color 0.2s;
+        outline: none;
+      }
+      .robo-tab:first-child {
+        border-radius: 8px 0 0 0;
+        border-right: 1px solid #e0e0e0;
+      }
+      .robo-tab:last-child {
+        border-radius: 0 8px 0 0;
+      }
+      .robo-tab.ativo-leilao {
+        background: #000144;
+        color: #fff;
+      }
+      .robo-tab.ativo-preco {
+        background: #1b5e20;
+        color: #fff;
+      }
+      .robo-tab:not(.ativo-leilao):not(.ativo-preco):hover {
+        background: #e8e8e8;
+      }
+
+      .card-header {
+        padding: 16px 24px 14px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #fff;
+        transition: background 0.2s;
+      }
+      .card-header.header-leilao {
+        background: #000144;
+      }
+      .card-header.header-preco {
+        background: #1b5e20;
+      }
+
       .card-body {
         padding: 24px;
       }
@@ -122,20 +169,56 @@
         margin-top: 20px;
         width: 100%;
         padding: 11px;
-        background: #b8860b;
         color: #fff;
         border: none;
         border-radius: 4px;
         font-size: 1rem;
         cursor: pointer;
         font-weight: bold;
+        transition: background 0.2s;
+      }
+      button#btnValidar.btn-leilao {
+        background: #000144;
+      }
+      button#btnValidar.btn-leilao:hover:not(:disabled) {
+        background: #00026d;
+      }
+      button#btnValidar.btn-preco {
+        background: #2e7d32;
+      }
+      button#btnValidar.btn-preco:hover:not(:disabled) {
+        background: #1b5e20;
       }
       button#btnValidar:disabled {
         background: #ccc;
         cursor: not-allowed;
       }
-      button#btnValidar:hover:not(:disabled) {
-        background: #9a700a;
+
+      /* Badge de modo */
+      .badge-modo {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: bold;
+        padding: 2px 8px;
+        border-radius: 10px;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
+      .badge-leilao {
+        background: rgba(255, 255, 255, 0.25);
+        color: #fff;
+      }
+      .badge-preco {
+        background: rgba(255, 255, 255, 0.25);
+        color: #fff;
+      }
+
+      /* Dica de CSV */
+      .csv-hint {
+        display: inline-block;
+        margin-top: 4px;
+        font-size: 0.78rem;
+        color: #888;
       }
 
       /* Progresso */
@@ -160,8 +243,12 @@
         background: #eee;
         border-radius: 4px;
       }
-      progress::-webkit-progress-value {
-        background: #b8860b;
+      progress.prog-leilao::-webkit-progress-value {
+        background: #00026d;
+        border-radius: 4px;
+      }
+      progress.prog-preco::-webkit-progress-value {
+        background: #2e7d32;
         border-radius: 4px;
       }
       #contadores {
@@ -222,7 +309,32 @@
   </head>
   <body>
     <div class="card">
-      <div class="card-header">🤖 Robô Leilão - ViniBot</div>
+      <!-- Seletor de robô -->
+      <div class="robo-selector">
+        <button
+          class="robo-tab ativo-leilao"
+          id="tabLeilao"
+          onclick="selecionarRobo('leilao')"
+        >
+          🔵 Transferir Leilão
+        </button>
+        <button
+          class="robo-tab"
+          id="tabPreco"
+          onclick="selecionarRobo('preco')"
+        >
+          🟢 Atualizar Preço
+        </button>
+      </div>
+
+      <!-- Cabeçalho dinâmico -->
+      <div class="card-header header-leilao" id="cardHeader">
+        🤖 Robô Leilão - ViniBot 2.0
+        <span class="badge-modo badge-leilao" id="badgeModo"
+          >TRANSFERÊNCIA DE LEILÕES</span
+        >
+      </div>
+
       <div class="card-body">
         <!-- Etapa 1: formulário -->
         <form id="form">
@@ -237,7 +349,7 @@
           <label>Senha</label>
           <input type="password" name="password" required />
 
-          <label>Número do Leilão (origem)</label>
+          <label>Número do Leilão</label>
           <input
             type="text"
             name="numeroLeilao"
@@ -245,12 +357,19 @@
             required
           />
 
-          <label>Arquivo CSV</label>
+          <label>
+            Arquivo CSV
+            <span class="csv-hint" id="csvHint">
+              Colunas: Lote, Dia, MiniDescrição, NumeroLeilao
+            </span>
+          </label>
           <input type="file" name="csv" accept=".csv" required />
 
           <div class="msg-erro" id="msgErro"></div>
 
-          <button type="submit" id="btnValidar">Carregar e Validar CSV</button>
+          <button type="submit" id="btnValidar" class="btn-leilao">
+            Carregar e Validar CSV
+          </button>
         </form>
 
         <!-- Etapa 2: confirmação -->
@@ -270,7 +389,12 @@
         <!-- Etapa 3: progresso -->
         <div id="secaoProgresso">
           <div id="statusMsg">Aguardando...</div>
-          <progress id="barra" value="0" max="100"></progress>
+          <progress
+            id="barra"
+            value="0"
+            max="100"
+            class="prog-leilao"
+          ></progress>
           <div id="contadores">0 / 0</div>
           <div id="log"></div>
           <div id="resumoFinal"></div>
@@ -280,6 +404,10 @@
     </div>
 
     <script>
+      // ── Estado global ──
+      let modoAtual = "leilao"; // "leilao" | "preco"
+      let relatorioCSV = "";
+
       const form = document.getElementById("form");
       const btnValidar = document.getElementById("btnValidar");
       const msgErro = document.getElementById("msgErro");
@@ -287,26 +415,62 @@
       const txtTotal = document.getElementById("txtTotal");
       const btnConfirmar = document.getElementById("btnConfirmar");
       const btnCancelar = document.getElementById("btnCancelar");
-      const secaoProgresso = document.getElementById("secaoProgresso");
+      const secaoProg = document.getElementById("secaoProgresso");
       const statusMsg = document.getElementById("statusMsg");
       const barra = document.getElementById("barra");
       const contadores = document.getElementById("contadores");
       const log = document.getElementById("log");
       const btnDownload = document.getElementById("btnDownload");
       const resumoFinal = document.getElementById("resumoFinal");
+      const cardHeader = document.getElementById("cardHeader");
+      const badgeModo = document.getElementById("badgeModo");
+      const tabLeilao = document.getElementById("tabLeilao");
+      const tabPreco = document.getElementById("tabPreco");
+      const csvHint = document.getElementById("csvHint");
 
-      let relatorioCSV = "";
+      // ── Troca de modo ──
+      function selecionarRobo(modo) {
+        modoAtual = modo;
 
+        // Tabs
+        tabLeilao.className =
+          "robo-tab" + (modo === "leilao" ? " ativo-leilao" : "");
+        tabPreco.className =
+          "robo-tab" + (modo === "preco" ? " ativo-preco" : "");
+
+        // Header
+        cardHeader.className = "card-header header-" + modo;
+        if (modo === "leilao") {
+          cardHeader.innerHTML =
+            '🤖 Robô Leilão - ViniBot 2.0 <span class="badge-modo badge-leilao">TRANSFERÊNCIA DE LEILÕES</span>';
+          csvHint.textContent =
+            "Colunas: Lote, Dia, MiniDescrição, NumeroLeilao";
+          btnValidar.className = "btn-leilao";
+          barra.className = "prog-leilao";
+        } else {
+          cardHeader.innerHTML =
+            '🤖 Robô Preço - ViniBot 2.0 <span class="badge-modo badge-preco">ATUALIZAÇÃO DE PREÇO</span>';
+          csvHint.textContent = "Colunas: MiniDescrição, Novo_Valor";
+          btnValidar.className = "btn-preco";
+          barra.className = "prog-preco";
+        }
+
+        // Ocultar etapas anteriores ao trocar
+        secaoConf.style.display = "none";
+        secaoProg.style.display = "none";
+        limparErro();
+        form.reset();
+      }
+
+      // ── Utilitários ──
       function mostrarErro(msg) {
         msgErro.textContent = msg;
         msgErro.style.display = "block";
       }
-
       function limparErro() {
         msgErro.style.display = "none";
         msgErro.textContent = "";
       }
-
       function addLog(texto, classe) {
         const linha = document.createElement("div");
         linha.className = classe || "";
@@ -315,7 +479,7 @@
         log.scrollTop = log.scrollHeight;
       }
 
-      // Etapa 1 — validar CSV
+      // ── Etapa 1 — validar CSV ──
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         limparErro();
@@ -323,8 +487,10 @@
         btnValidar.textContent = "Validando...";
 
         const data = new FormData(form);
+        const rota = modoAtual === "leilao" ? "/validar" : "/validar-preco";
+
         try {
-          const resp = await fetch("/validar", { method: "POST", body: data });
+          const resp = await fetch(rota, { method: "POST", body: data });
           const json = await resp.json();
 
           if (!resp.ok || json.erro) {
@@ -334,8 +500,8 @@
             return;
           }
 
-          // Mostra confirmação
-          txtTotal.textContent = `${json.total} lote(s) encontrado(s).`;
+          const unidade = modoAtual === "leilao" ? "lote(s)" : "item(ns)";
+          txtTotal.textContent = `${json.total} ${unidade} encontrado(s).`;
           secaoConf.style.display = "block";
           btnValidar.disabled = false;
           btnValidar.textContent = "Carregar e Validar CSV";
@@ -346,12 +512,12 @@
         }
       });
 
-      // Cancelar — esconde confirmação
+      // Cancelar
       btnCancelar.addEventListener("click", () => {
         secaoConf.style.display = "none";
       });
 
-      // Etapa 2 — confirmar e iniciar Chrome
+      // ── Etapa 2 — confirmar e iniciar ──
       btnConfirmar.addEventListener("click", async () => {
         secaoConf.style.display = "none";
         log.innerHTML = "";
@@ -360,11 +526,13 @@
         resumoFinal.style.display = "none";
         btnDownload.style.display = "none";
         relatorioCSV = "";
-        secaoProgresso.style.display = "block";
+        secaoProg.style.display = "block";
         statusMsg.textContent = "Iniciando...";
         btnConfirmar.disabled = true;
 
-        // Conectar SSE antes de chamar /iniciar
+        const rotaIniciar =
+          modoAtual === "leilao" ? "/iniciar" : "/iniciar-preco";
+
         const sse = new EventSource("/progresso");
         sse.onmessage = (e) => {
           const d = JSON.parse(e.data);
@@ -417,7 +585,7 @@
         };
 
         try {
-          const resp = await fetch("/iniciar", { method: "POST" });
+          const resp = await fetch(rotaIniciar, { method: "POST" });
           const json = await resp.json();
           if (!resp.ok || json.erro) {
             addLog("Erro ao iniciar: " + (json.erro || "falha"), "log-erro");
@@ -431,6 +599,7 @@
         }
       });
 
+      // ── Download relatório ──
       btnDownload.addEventListener("click", () => {
         const blob = new Blob(["\uFEFF" + relatorioCSV], {
           type: "text/csv;charset=utf-8;",
@@ -438,7 +607,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `relatorio_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.download = `relatorio_${modoAtual}_${new Date().toISOString().slice(0, 10)}.csv`;
         a.click();
         URL.revokeObjectURL(url);
       });
