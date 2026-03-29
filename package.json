@@ -9,8 +9,12 @@
   "author": "Vinicius",
   "license": "ISC",
   "dependencies": {
-"express": "^5.2.1",
+    "@aws-sdk/client-s3": "^3.1019.0",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
     "multer": "^2.1.1",
-    "selenium-webdriver": "^4.41.0"
+    "pg": "^8.20.0",
+    "selenium-webdriver": "^4.41.0",
+    "sharp": "^0.34.5"
   }
 }

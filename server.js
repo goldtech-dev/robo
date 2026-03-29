@@ -11,6 +11,7 @@ const {
 } = require("./index");
 
 const { validarHeaderCSVPreco, atualizarPreco } = require("./preco");
+const { validarHeaderCSVImagem, uploadImagem } = require("./imagem");
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -279,6 +280,127 @@ app.post("/iniciar-preco", (req, res) => {
       ...resultados.erro.map(
         (r) => `erro,${r.mini_descricao},${r.novo_valor},"${r.motivo}"`,
       ),
+    ];
+
+    emit({
+      tipo: "fim",
+      sucesso: resultados.sucesso.length,
+      erros: resultados.erro.length,
+      relatorioCSV: linhas.join("\n"),
+    });
+  })();
+});
+
+// ─── Robô Imagem ─────────────────────────────────────────────────────────────
+
+app.post("/validar-imagem", upload.single("csv"), (req, res) => {
+  const { username, password, numeroLeilao } = req.body;
+
+  if (!req.file || !username || !password || !numeroLeilao) {
+    return res
+      .status(400)
+      .json({ erro: "Preencha todos os campos e envie o CSV." });
+  }
+
+  let lotes;
+  try {
+    lotes = lerCSVBuffer(req.file.buffer);
+  } catch (e) {
+    return res
+      .status(400)
+      .json({ erro: "Não foi possível ler o CSV: " + e.message });
+  }
+
+  const erroHeader = validarHeaderCSVImagem(lotes);
+  if (erroHeader) {
+    return res.status(400).json({ erro: erroHeader });
+  }
+
+  req.app.locals.pendenteImagem = { username, password, numeroLeilao, lotes };
+  res.json({ ok: true, total: lotes.length });
+});
+
+app.post("/iniciar-imagem", (req, res) => {
+  const pendente = req.app.locals.pendenteImagem;
+
+  if (!pendente) {
+    return res.status(400).json({
+      erro: "Nenhuma sessão pendente. Faça o upload do CSV primeiro.",
+    });
+  }
+
+  req.app.locals.pendenteImagem = null;
+  res.json({ ok: true });
+
+  const { username, password, numeroLeilao, lotes } = pendente;
+
+  (async () => {
+    const resultados = { sucesso: [], erro: [] };
+    let driver;
+
+    try {
+      emit({ tipo: "status", msg: "Iniciando Chrome..." });
+      driver = await criarDriver();
+
+      emit({ tipo: "status", msg: "Fazendo login..." });
+      await fazerLogin(driver, username, password, numeroLeilao);
+      emit({ tipo: "status", msg: "Login OK. Fazendo upload de imagens..." });
+
+      for (let i = 0; i < lotes.length; i++) {
+        const item = lotes[i];
+        emit({
+          tipo: "progresso",
+          indice: i + 1,
+          total: lotes.length,
+          descricao: item.mini_descricao,
+        });
+
+        try {
+          const sucesso = await uploadImagem(driver, item);
+          if (sucesso) {
+            resultados.sucesso.push(item);
+            emit({
+              tipo: "lote",
+              indice: i + 1,
+              total: lotes.length,
+              descricao: item.mini_descricao,
+              status: "sucesso",
+            });
+          } else {
+            resultados.erro.push({ ...item, motivo: "servidor retornou erro" });
+            emit({
+              tipo: "lote",
+              indice: i + 1,
+              total: lotes.length,
+              descricao: item.mini_descricao,
+              status: "erro",
+              motivo: "servidor retornou erro",
+            });
+          }
+        } catch (e) {
+          resultados.erro.push({ ...item, motivo: e.message });
+          emit({
+            tipo: "lote",
+            indice: i + 1,
+            total: lotes.length,
+            descricao: item.mini_descricao,
+            status: "erro",
+            motivo: e.message,
+          });
+        }
+
+        await driver.sleep(DELAY_ENTRE_ITENS);
+      }
+    } catch (e) {
+      emit({ tipo: "erro_fatal", msg: e.message });
+    } finally {
+      if (driver) await driver.quit();
+    }
+
+    const linhas = [
+      "Status,mini_descricao,Motivo",
+      ...resultados.sucesso.map((r) => `sucesso,${r.mini_descricao},`),
+      ...resultados.erro.map((r) => `erro,${r.mini_descricao},"${r.motivo}"`),
     ];
 
     emit({

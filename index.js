@@ -93,8 +93,11 @@ function criarDriver() {
 async function fazerLogin(driver, username, password, numeroLeilao) {
   await driver.get(URL_LOGIN);
   await driver.findElement(By.id("usuario")).sendKeys(username);
+  await driver.sleep(200);
   await driver.findElement(By.id("senha")).sendKeys(password);
+  await driver.sleep(200);
   await driver.findElement(By.id("leilao")).sendKeys(String(numeroLeilao));
+  await driver.sleep(200);
   await driver
     .findElement(By.css("button[type=submit], input[type=submit], .btn-yellow"))
     .click();
@@ -112,8 +115,11 @@ async function fazerLogin(driver, username, password, numeroLeilao) {
 async function processarLote(driver, item) {
   // 1. Pesquisar pela MiniDescrição
   const campoBusca = await driver.findElement(By.id("Descricao"));
+  await driver.sleep(200);
   await campoBusca.clear();
+  await driver.sleep(200);
   await campoBusca.sendKeys(item.mini_descricao);
+  await driver.sleep(500);
 
   // 2. Clicar em Pesquisar
   await driver
@@ -122,30 +128,40 @@ async function processarLote(driver, item) {
 
   // 3. Aguardar resultados
   await driver.wait(until.elementLocated(By.css("table tbody tr")), 8000);
-  await driver.sleep(500);
+  await driver.sleep(1000);
 
   // 4. Clicar no botão exportar (seta verde)
   const exportBtn = await driver.findElement(
     By.css('a.is-color6[data-func^="exportapeca"]'),
   );
+  await driver.sleep(200);
   await exportBtn.click();
 
   // 5. Aguardar modal abrir
   await driver.wait(until.elementLocated(By.id("expleilao")), 8000);
-  await driver.sleep(300);
+  await driver.sleep(500);
 
   // 6. Preencher campos do modal
   const inputLeilao = await driver.findElement(By.id("expleilao"));
+  await driver.sleep(200);
   await inputLeilao.clear();
+  await driver.sleep(200);
   await inputLeilao.sendKeys(String(item.numero_leilao));
+  await driver.sleep(500);
 
   const inputLote = await driver.findElement(By.id("explote"));
+  await driver.sleep(200);
   await inputLote.clear();
+  await driver.sleep(200);
   await inputLote.sendKeys(String(item.lote));
+  await driver.sleep(500);
 
   const inputDia = await driver.findElement(By.id("expdia"));
+  await driver.sleep(200);
   await inputDia.clear();
+  await driver.sleep(200);
   await inputDia.sendKeys(String(item.dia));
+  await driver.sleep(500);
 
   // 7. Confirmar exportação
   await driver

@@ -15,8 +15,11 @@ function validarHeaderCSVPreco(lotes) {
 async function atualizarPreco(driver, item) {
   // 1. Pesquisar pela MiniDescrição
   const campoBusca = await driver.findElement(By.id("Descricao"));
+  await driver.sleep(200);
   await campoBusca.clear();
+  await driver.sleep(200);
   await campoBusca.sendKeys(item.mini_descricao);
+  await driver.sleep(500);
 
   // 2. Clicar em Pesquisar
   await driver
@@ -31,6 +34,7 @@ async function atualizarPreco(driver, item) {
   const editBtn = await driver.findElement(
     By.css('a.is-color3[data-func^="editapeca"]'),
   );
+  await driver.sleep(200);
   await editBtn.click();
 
   // 5. Aguardar tela de edição carregar (campo Valor_Contratado)
@@ -39,13 +43,17 @@ async function atualizarPreco(driver, item) {
 
   // 6. Preencher o novo valor
   const inputValor = await driver.findElement(By.id("Valor_Contratado"));
+  await driver.sleep(200);
   await inputValor.clear();
+  await driver.sleep(200);
   await inputValor.sendKeys(String(item.novo_valor));
+  await driver.sleep(500);
 
   // 7. Clicar em Atualizar peça
   await driver
     .findElement(By.css('button.btn-yellow[data-func^="gravacadpeca"]'))
     .click();
+  await driver.sleep(200);
 
   // 8. Aguardar resposta
   await driver.wait(
@@ -56,13 +64,15 @@ async function atualizarPreco(driver, item) {
   const alertEl = await driver.findElement(
     By.css("div.alert-success, div.alert-danger"),
   );
+  await driver.sleep(200);
   const alertClass = await alertEl.getAttribute("class");
+  await driver.sleep(200);
   const sucesso = alertClass.includes("alert-success");
+  await driver.sleep(500);
 
   // 9. Fechar a tela de edição (botão "Fechar")
-  await driver
-    .findElement(By.css("a.is-backbtn"))
-    .click();
+  await driver.findElement(By.css("a.is-backbtn")).click();
+  await driver.sleep(200);
 
   // 10. Aguardar voltar para a listagem (campo de busca visível)
   await driver.wait(until.elementLocated(By.id("Descricao")), 10000);

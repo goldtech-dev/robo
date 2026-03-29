@@ -52,6 +52,9 @@
       .robo-tab:last-child {
         border-radius: 0 8px 0 0;
       }
+      .robo-tab:not(:first-child):not(:last-child) {
+        border-right: 1px solid #e0e0e0;
+      }
       .robo-tab.ativo-leilao {
         background: #000144;
         color: #fff;
@@ -60,7 +63,11 @@
         background: #1b5e20;
         color: #fff;
       }
-      .robo-tab:not(.ativo-leilao):not(.ativo-preco):hover {
+      .robo-tab.ativo-imagem {
+        background: #e65100;
+        color: #fff;
+      }
+      .robo-tab:not(.ativo-leilao):not(.ativo-preco):not(.ativo-imagem):hover {
         background: #e8e8e8;
       }
 
@@ -76,6 +83,9 @@
       }
       .card-header.header-preco {
         background: #1b5e20;
+      }
+      .card-header.header-imagem {
+        background: #e65100;
       }
 
       .card-body {
@@ -189,6 +199,12 @@
       button#btnValidar.btn-preco:hover:not(:disabled) {
         background: #1b5e20;
       }
+      button#btnValidar.btn-imagem {
+        background: #e65100;
+      }
+      button#btnValidar.btn-imagem:hover:not(:disabled) {
+        background: #bf360c;
+      }
       button#btnValidar:disabled {
         background: #ccc;
         cursor: not-allowed;
@@ -249,6 +265,10 @@
       }
       progress.prog-preco::-webkit-progress-value {
         background: #2e7d32;
+        border-radius: 4px;
+      }
+      progress.prog-imagem::-webkit-progress-value {
+        background: #e65100;
         border-radius: 4px;
       }
       #contadores {
@@ -325,6 +345,13 @@
         >
           🟢 Atualizar Preço
         </button>
+        <button
+          class="robo-tab"
+          id="tabImagem"
+          onclick="selecionarRobo('imagem')"
+        >
+          🟠 Upload Imagens
+        </button>
       </div>
 
       <!-- Cabeçalho dinâmico -->
@@ -360,7 +387,7 @@
           <label>
             Arquivo CSV
             <span class="csv-hint" id="csvHint">
-              Colunas: Lote, Dia, MiniDescrição, NumeroLeilao
+              Colunas: lote, dia, mini_descricao, numero_leilao
             </span>
           </label>
           <input type="file" name="csv" accept=".csv" required />
@@ -405,7 +432,7 @@
 
     <script>
       // ── Estado global ──
-      let modoAtual = "leilao"; // "leilao" | "preco"
+      let modoAtual = "leilao"; // "leilao" | "preco" | "imagem"
       let relatorioCSV = "";
 
       const form = document.getElementById("form");
@@ -426,6 +453,7 @@
       const badgeModo = document.getElementById("badgeModo");
       const tabLeilao = document.getElementById("tabLeilao");
       const tabPreco = document.getElementById("tabPreco");
+      const tabImagem = document.getElementById("tabImagem");
       const csvHint = document.getElementById("csvHint");
 
       // ── Troca de modo ──
@@ -437,6 +465,8 @@
           "robo-tab" + (modo === "leilao" ? " ativo-leilao" : "");
         tabPreco.className =
           "robo-tab" + (modo === "preco" ? " ativo-preco" : "");
+        tabImagem.className =
+          "robo-tab" + (modo === "imagem" ? " ativo-imagem" : "");
 
         // Header
         cardHeader.className = "card-header header-" + modo;
@@ -444,15 +474,22 @@
           cardHeader.innerHTML =
             '🤖 Robô Leilão - ViniBot 2.0 <span class="badge-modo badge-leilao">TRANSFERÊNCIA DE LEILÕES</span>';
           csvHint.textContent =
-            "Colunas: Lote, Dia, MiniDescrição, NumeroLeilao";
+            "Colunas: lote, dia, mini_descricao, numero_leilao";
           btnValidar.className = "btn-leilao";
           barra.className = "prog-leilao";
-        } else {
+        } else if (modo === "preco") {
           cardHeader.innerHTML =
             '🤖 Robô Preço - ViniBot 2.0 <span class="badge-modo badge-preco">ATUALIZAÇÃO DE PREÇO</span>';
-          csvHint.textContent = "Colunas: MiniDescrição, Novo_Valor";
+          csvHint.textContent = "Colunas: mini_descricao, novo_valor";
           btnValidar.className = "btn-preco";
           barra.className = "prog-preco";
+        } else {
+          cardHeader.innerHTML =
+            '🤖 Robô Imagens - ViniBot 2.0 <span class="badge-modo" style="background:rgba(255,255,255,0.25);color:#fff">UPLOAD DE IMAGENS</span>';
+          csvHint.textContent =
+            "Colunas: mini_descricao,key_principal,key_extra_1,key_extra_2,key_extra_3,key_extra_4,key_extra_5";
+          btnValidar.className = "btn-imagem";
+          barra.className = "prog-imagem";
         }
 
         // Ocultar etapas anteriores ao trocar
@@ -487,7 +524,12 @@
         btnValidar.textContent = "Validando...";
 
         const data = new FormData(form);
-        const rota = modoAtual === "leilao" ? "/validar" : "/validar-preco";
+        const rota =
+          modoAtual === "leilao"
+            ? "/validar"
+            : modoAtual === "preco"
+              ? "/validar-preco"
+              : "/validar-imagem";
 
         try {
           const resp = await fetch(rota, { method: "POST", body: data });
@@ -500,7 +542,12 @@
             return;
           }
 
-          const unidade = modoAtual === "leilao" ? "lote(s)" : "item(ns)";
+          const unidade =
+            modoAtual === "leilao"
+              ? "lote(s)"
+              : modoAtual === "imagem"
+                ? "peça(s)"
+                : "item(ns)";
           txtTotal.textContent = `${json.total} ${unidade} encontrado(s).`;
           secaoConf.style.display = "block";
           btnValidar.disabled = false;
@@ -531,7 +578,11 @@
         btnConfirmar.disabled = true;
 
         const rotaIniciar =
-          modoAtual === "leilao" ? "/iniciar" : "/iniciar-preco";
+          modoAtual === "leilao"
+            ? "/iniciar"
+            : modoAtual === "preco"
+              ? "/iniciar-preco"
+              : "/iniciar-imagem";
 
         const sse = new EventSource("/progresso");
         sse.onmessage = (e) => {
