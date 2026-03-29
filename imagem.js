@@ -179,17 +179,18 @@ async function uploadImagem(driver, item) {
         .catch(() => {});
       await driver.sleep(1000);
 
-      // Fechar modal de sucesso/erro clicando no X
+      // Fechar modal de sucesso/erro via JS (evita problemas de animação/intercept)
       try {
-        const fecharModal = await driver.findElement(
-          By.css("#responsemodal .close[data-dismiss='modal']")
-        );
-        await fecharModal.click();
-        await driver.wait(
-          until.elementIsNotVisible(await driver.findElement(By.css("#responsemodal"))),
-          5000
-        );
-        await driver.sleep(300);
+        await driver.executeScript(`
+          var modal = document.getElementById('responsemodal');
+          if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('in', 'show');
+          }
+          document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
+          document.body.classList.remove('modal-open');
+        `);
+        await driver.sleep(400);
       } catch (_) {}
     }
 
