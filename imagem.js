@@ -145,15 +145,11 @@ async function uploadImagem(driver, item) {
       tmpFiles.push(tmpPath);
 
       await driver.findElement(By.css('a[data-func^="subirimgpeca"]')).click();
-      await driver.sleep(200);
-      await driver.wait(
-        until.elementLocated(By.css(".modal.in, .modal.show")),
-        8000,
-      );
-      await driver.sleep(500);
+      await driver.sleep(2000);
 
-      const inputFilePrincipal = await driver.findElement(
-        By.css(".modal.in input[type=file], .modal.show input[type=file]"),
+      const inputFilePrincipal = await driver.wait(
+        until.elementLocated(By.css('.modal input[type=file]')),
+        10000,
       );
       await driver.sleep(200);
       await driver.executeScript(
@@ -207,14 +203,11 @@ async function uploadImagem(driver, item) {
       }
 
       await driver.findElement(By.css('a[data-func^="geremimgpeca"]')).click();
-      await driver.wait(
-        until.elementLocated(By.css(".modal.in, .modal.show")),
-        8000,
-      );
-      await driver.sleep(500);
+      await driver.sleep(2000);
 
-      const inputFileExtras = await driver.findElement(
-        By.css(".modal.in input[type=file], .modal.show input[type=file]"),
+      const inputFileExtras = await driver.wait(
+        until.elementLocated(By.css('.modal input[type=file]')),
+        10000,
       );
       await driver.executeScript(
         "arguments[0].style.display='block'; arguments[0].style.opacity='1'; arguments[0].style.visibility='visible';",
