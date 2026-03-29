@@ -179,10 +179,17 @@ async function uploadImagem(driver, item) {
         .catch(() => {});
       await driver.sleep(1000);
 
+      // Fechar modal de sucesso/erro clicando no X
       try {
-        const backdrop = await driver.findElement(By.css(".modal-backdrop"));
-        await driver.executeScript("arguments[0].click()", backdrop);
-        await driver.sleep(500);
+        const fecharModal = await driver.findElement(
+          By.css("#responsemodal .close[data-dismiss='modal']")
+        );
+        await fecharModal.click();
+        await driver.wait(
+          until.elementIsNotVisible(await driver.findElement(By.css("#responsemodal"))),
+          5000
+        );
+        await driver.sleep(300);
       } catch (_) {}
     }
 
