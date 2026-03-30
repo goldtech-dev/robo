@@ -81,8 +81,13 @@ async function processAndResizeImage(
 }
 
 async function salvarTmp(buffer, nomeBase) {
-  const nomeSanitizado = nomeBase.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/\.(jpeg|jpg)$/i, "") + ".jpg";
-  const tmpPath = path.join(os.tmpdir(), `robo_img_${Date.now()}_${nomeSanitizado}`);
+  const nomeSanitizado =
+    nomeBase.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/\.(jpeg|jpg)$/i, "") +
+    ".jpg";
+  const tmpPath = path.join(
+    os.tmpdir(),
+    `robo_img_${Date.now()}_${nomeSanitizado}`,
+  );
   await fs.promises.writeFile(tmpPath, buffer);
   return tmpPath;
 }
@@ -160,7 +165,7 @@ async function uploadImagem(driver, item) {
       await driver.sleep(2000);
 
       const inputFilePrincipal = await driver.wait(
-        until.elementLocated(By.css('.modal input[type=file]')),
+        until.elementLocated(By.css(".modal input[type=file]")),
         10000,
       );
       await driver.sleep(200);
@@ -185,7 +190,6 @@ async function uploadImagem(driver, item) {
           15000,
         )
         .catch(() => {});
-      await driver.sleep(1000);
 
       // Fechar modal de sucesso clicando no X via JS
       await fecharResponseModal(driver);
@@ -204,13 +208,18 @@ async function uploadImagem(driver, item) {
       }
 
       // Abrir modal de extras uma vez e enviar todos os arquivos
-      const botoesExtras = await driver.findElements(By.css('a[data-func^="geremimgpeca"]'));
+      const botoesExtras = await driver.findElements(
+        By.css('a[data-func^="geremimgpeca"]'),
+      );
       const btnExtra = botoesExtras[botoesExtras.length - 1];
-      await driver.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", btnExtra);
+      await driver.executeScript(
+        "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();",
+        btnExtra,
+      );
       await driver.sleep(2000);
 
       const inputFileExtra = await driver.wait(
-        until.elementLocated(By.css('.modal input[type=file]')),
+        until.elementLocated(By.css(".modal input[type=file]")),
         10000,
       );
       await driver.executeScript(
