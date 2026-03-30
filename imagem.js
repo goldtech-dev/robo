@@ -175,18 +175,11 @@ async function uploadImagem(driver, item) {
         .catch(() => {});
       await driver.sleep(1000);
 
-      // Fechar modal de sucesso/erro via JS (evita problemas de animação/intercept)
+      // Fechar modal de sucesso clicando no body (qualquer clique fecha)
       try {
-        await driver.executeScript(`
-          var modal = document.getElementById('responsemodal');
-          if (modal) {
-            modal.style.display = 'none';
-            modal.classList.remove('in', 'show');
-          }
-          document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
-          document.body.classList.remove('modal-open');
-        `);
-        await driver.sleep(400);
+        await driver.sleep(3000);
+        await driver.executeScript("document.body.click();");
+        await driver.sleep(500);
       } catch (_) {}
     }
 
@@ -204,9 +197,10 @@ async function uploadImagem(driver, item) {
 
       // Enviar cada imagem extra individualmente (input não aceita múltiplos)
       for (const tmpPath of tmpPaths) {
-        // Usa o último botão geremimgpeca (painel lateral direito)
+        // Rola até o botão e clica via JS para evitar intercept por elemento sobreposto
         const botoesExtras = await driver.findElements(By.css('a[data-func^="geremimgpeca"]'));
-        await botoesExtras[botoesExtras.length - 1].click();
+        const btnExtra = botoesExtras[botoesExtras.length - 1];
+        await driver.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", btnExtra);
         await driver.sleep(2000);
 
         const inputFileExtra = await driver.wait(
@@ -228,13 +222,9 @@ async function uploadImagem(driver, item) {
 
         // Fechar modal de sucesso/erro via JS
         try {
-          await driver.executeScript(`
-            var modal = document.getElementById('responsemodal');
-            if (modal) { modal.style.display = 'none'; modal.classList.remove('in', 'show'); }
-            document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
-            document.body.classList.remove('modal-open');
-          `);
-          await driver.sleep(400);
+          await driver.sleep(3000);
+          await driver.executeScript("document.body.click();");
+          await driver.sleep(500);
         } catch (_) {}
       }
     }
