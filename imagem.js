@@ -202,30 +202,41 @@ async function uploadImagem(driver, item) {
         tmpPaths.push(tmpPath);
       }
 
-      await driver.findElement(By.css('a[data-func^="geremimgpeca"]')).click();
-      await driver.sleep(2000);
+      // Enviar cada imagem extra individualmente (input não aceita múltiplos)
+      for (const tmpPath of tmpPaths) {
+        // Usa o último botão geremimgpeca (painel lateral direito)
+        const botoesExtras = await driver.findElements(By.css('a[data-func^="geremimgpeca"]'));
+        await botoesExtras[botoesExtras.length - 1].click();
+        await driver.sleep(2000);
 
-      const inputFileExtras = await driver.wait(
-        until.elementLocated(By.css('.modal input[type=file]')),
-        10000,
-      );
-      await driver.executeScript(
-        "arguments[0].style.display='block'; arguments[0].style.opacity='1'; arguments[0].style.visibility='visible';",
-        inputFileExtras,
-      );
-      await inputFileExtras.sendKeys(tmpPaths.join("\n"));
-      await driver.sleep(1000);
+        const inputFileExtra = await driver.wait(
+          until.elementLocated(By.css('.modal input[type=file]')),
+          10000,
+        );
+        await driver.executeScript(
+          "arguments[0].style.display='block'; arguments[0].style.opacity='1'; arguments[0].style.visibility='visible';",
+          inputFileExtra,
+        );
+        await inputFileExtra.sendKeys(tmpPath);
+        await driver.sleep(1000);
 
-      await driver
-        .findElement(By.css('a.fileinput-upload[href*="img_pecas_extras"]'))
-        .click();
+        await driver
+          .findElement(By.css('a.fileinput-upload[href*="img_pecas_extras"]'))
+          .click();
 
-      await driver.sleep(2000);
-      try {
-        const backdrop = await driver.findElement(By.css(".modal-backdrop"));
-        await driver.executeScript("arguments[0].click()", backdrop);
-        await driver.sleep(500);
-      } catch (_) {}
+        await driver.sleep(2000);
+
+        // Fechar modal de sucesso/erro via JS
+        try {
+          await driver.executeScript(`
+            var modal = document.getElementById('responsemodal');
+            if (modal) { modal.style.display = 'none'; modal.classList.remove('in', 'show'); }
+            document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
+            document.body.classList.remove('modal-open');
+          `);
+          await driver.sleep(400);
+        } catch (_) {}
+      }
     }
 
     // === ATIVAR NO SITE ===
