@@ -98,7 +98,7 @@ async function limparArquivos(caminhos) {
 async function fecharResponseModal(driver) {
   // Aguarda o modal aparecer e clica no X via JS
   try {
-    await driver.sleep(3500);
+    await driver.sleep(2500);
     await driver.executeScript(`
       var btn = document.querySelector('#responsemodal .close[data-dismiss="modal"]');
       if (btn) btn.click();
@@ -203,36 +203,34 @@ async function uploadImagem(driver, item) {
         tmpPaths.push(tmpPath);
       }
 
-      // Enviar cada imagem extra individualmente (input não aceita múltiplos)
+      // Abrir modal de extras uma vez e enviar todos os arquivos
+      const botoesExtras = await driver.findElements(By.css('a[data-func^="geremimgpeca"]'));
+      const btnExtra = botoesExtras[botoesExtras.length - 1];
+      await driver.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", btnExtra);
+      await driver.sleep(2000);
+
+      const inputFileExtra = await driver.wait(
+        until.elementLocated(By.css('.modal input[type=file]')),
+        10000,
+      );
+      await driver.executeScript(
+        "arguments[0].style.display='block'; arguments[0].style.opacity='1'; arguments[0].style.visibility='visible';",
+        inputFileExtra,
+      );
+
+      // sendKeys múltiplas vezes no mesmo input acumula os arquivos
       for (const tmpPath of tmpPaths) {
-        // Rola até o botão e clica via JS para evitar intercept por elemento sobreposto
-        const botoesExtras = await driver.findElements(By.css('a[data-func^="geremimgpeca"]'));
-        const btnExtra = botoesExtras[botoesExtras.length - 1];
-        await driver.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", btnExtra);
-        await driver.sleep(2000);
-
-        const inputFileExtra = await driver.wait(
-          until.elementLocated(By.css('.modal input[type=file]')),
-          10000,
-        );
-        await driver.executeScript(
-          "arguments[0].style.display='block'; arguments[0].style.opacity='1'; arguments[0].style.visibility='visible';",
-          inputFileExtra,
-        );
         await inputFileExtra.sendKeys(tmpPath);
-        await driver.sleep(1000);
-
-        await driver
-          .findElement(By.css('a.fileinput-upload[href*="img_pecas_extras"]'))
-          .click();
-
-        await driver.sleep(2000);
-
-        // Fechar modal de sucesso/erro via JS
-        try {
-          await fecharResponseModal(driver);
-        } catch (_) {}
+        await driver.sleep(300);
       }
+      await driver.sleep(500);
+
+      await driver
+        .findElement(By.css('a.fileinput-upload[href*="img_pecas_extras"]'))
+        .click();
+
+      await driver.sleep(2000);
+      await fecharResponseModal(driver);
     }
 
     // === ATIVAR NO SITE ===
