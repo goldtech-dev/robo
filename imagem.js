@@ -95,6 +95,18 @@ async function limparArquivos(caminhos) {
   }
 }
 
+async function fecharResponseModal(driver) {
+  // Aguarda o modal aparecer e clica no X via JS
+  try {
+    await driver.sleep(3500);
+    await driver.executeScript(`
+      var btn = document.querySelector('#responsemodal .close[data-dismiss="modal"]');
+      if (btn) btn.click();
+    `);
+    await driver.sleep(600);
+  } catch (_) {}
+}
+
 async function uploadImagem(driver, item) {
   const s3 = criarS3Client();
   const tmpFiles = [];
@@ -175,12 +187,8 @@ async function uploadImagem(driver, item) {
         .catch(() => {});
       await driver.sleep(1000);
 
-      // Fechar modal de sucesso clicando no body (qualquer clique fecha)
-      try {
-        await driver.sleep(3000);
-        await driver.executeScript("document.body.click();");
-        await driver.sleep(500);
-      } catch (_) {}
+      // Fechar modal de sucesso clicando no X via JS
+      await fecharResponseModal(driver);
     }
 
     // === UPLOAD IMAGENS EXTRAS ===
@@ -222,9 +230,7 @@ async function uploadImagem(driver, item) {
 
         // Fechar modal de sucesso/erro via JS
         try {
-          await driver.sleep(3000);
-          await driver.executeScript("document.body.click();");
-          await driver.sleep(500);
+          await fecharResponseModal(driver);
         } catch (_) {}
       }
     }
