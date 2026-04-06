@@ -67,7 +67,11 @@
         background: #e65100;
         color: #fff;
       }
-      .robo-tab:not(.ativo-leilao):not(.ativo-preco):not(.ativo-imagem):hover {
+      .robo-tab.ativo-transferencia {
+        background: #6a1b9a;
+        color: #fff;
+      }
+      .robo-tab:not(.ativo-leilao):not(.ativo-preco):not(.ativo-imagem):not(.ativo-transferencia):hover {
         background: #e8e8e8;
       }
 
@@ -86,6 +90,9 @@
       }
       .card-header.header-imagem {
         background: #e65100;
+      }
+      .card-header.header-transferencia {
+        background: #6a1b9a;
       }
 
       .card-body {
@@ -205,6 +212,12 @@
       button#btnValidar.btn-imagem:hover:not(:disabled) {
         background: #bf360c;
       }
+      button#btnValidar.btn-transferencia {
+        background: #6a1b9a;
+      }
+      button#btnValidar.btn-transferencia:hover:not(:disabled) {
+        background: #4a148c;
+      }
       button#btnValidar:disabled {
         background: #ccc;
         cursor: not-allowed;
@@ -269,6 +282,10 @@
       }
       progress.prog-imagem::-webkit-progress-value {
         background: #e65100;
+        border-radius: 4px;
+      }
+      progress.prog-transferencia::-webkit-progress-value {
+        background: #6a1b9a;
         border-radius: 4px;
       }
       #contadores {
@@ -351,6 +368,13 @@
           onclick="selecionarRobo('imagem')"
         >
           🟠 Upload Imagens
+        </button>
+        <button
+          class="robo-tab"
+          id="tabTransferencia"
+          onclick="selecionarRobo('transferencia')"
+        >
+          🟣 Transferir c/ Valor
         </button>
       </div>
 
@@ -454,6 +478,7 @@
       const tabLeilao = document.getElementById("tabLeilao");
       const tabPreco = document.getElementById("tabPreco");
       const tabImagem = document.getElementById("tabImagem");
+      const tabTransferencia = document.getElementById("tabTransferencia");
       const csvHint = document.getElementById("csvHint");
 
       // ── Troca de modo ──
@@ -467,6 +492,8 @@
           "robo-tab" + (modo === "preco" ? " ativo-preco" : "");
         tabImagem.className =
           "robo-tab" + (modo === "imagem" ? " ativo-imagem" : "");
+        tabTransferencia.className =
+          "robo-tab" + (modo === "transferencia" ? " ativo-transferencia" : "");
 
         // Header
         cardHeader.className = "card-header header-" + modo;
@@ -483,13 +510,19 @@
           csvHint.textContent = "Colunas: mini_descricao, novo_valor";
           btnValidar.className = "btn-preco";
           barra.className = "prog-preco";
-        } else {
+        } else if (modo === "imagem") {
           cardHeader.innerHTML =
             '🤖 Robô Imagens - ViniBot 2.0 <span class="badge-modo" style="background:rgba(255,255,255,0.25);color:#fff">UPLOAD DE IMAGENS</span>';
           csvHint.textContent =
             "Colunas: mini_descricao,key_principal,key_extra_1,key_extra_2,key_extra_3,key_extra_4,key_extra_5";
           btnValidar.className = "btn-imagem";
           barra.className = "prog-imagem";
+        } else {
+          cardHeader.innerHTML =
+            '🤖 Robô Transferência c/ Valor - ViniBot 2.0 <span class="badge-modo" style="background:rgba(255,255,255,0.25);color:#fff">TRANSFERÊNCIA COM VALOR</span>';
+          csvHint.textContent = "Colunas: Lote, Dia, MiniDescrição, NumeroLeilao, Novo_Valor";
+          btnValidar.className = "btn-transferencia";
+          barra.className = "prog-transferencia";
         }
 
         // Ocultar etapas anteriores ao trocar
@@ -524,12 +557,8 @@
         btnValidar.textContent = "Validando...";
 
         const data = new FormData(form);
-        const rota =
-          modoAtual === "leilao"
-            ? "/validar"
-            : modoAtual === "preco"
-              ? "/validar-preco"
-              : "/validar-imagem";
+        const rotasValidar = { leilao: "/validar", preco: "/validar-preco", imagem: "/validar-imagem", transferencia: "/validar-transferencia" };
+        const rota = rotasValidar[modoAtual];
 
         try {
           const resp = await fetch(rota, { method: "POST", body: data });
@@ -543,7 +572,7 @@
           }
 
           const unidade =
-            modoAtual === "leilao"
+            modoAtual === "leilao" || modoAtual === "transferencia"
               ? "lote(s)"
               : modoAtual === "imagem"
                 ? "peça(s)"
@@ -577,12 +606,8 @@
         statusMsg.textContent = "Iniciando...";
         btnConfirmar.disabled = true;
 
-        const rotaIniciar =
-          modoAtual === "leilao"
-            ? "/iniciar"
-            : modoAtual === "preco"
-              ? "/iniciar-preco"
-              : "/iniciar-imagem";
+        const rotasIniciar = { leilao: "/iniciar", preco: "/iniciar-preco", imagem: "/iniciar-imagem", transferencia: "/iniciar-transferencia" };
+        const rotaIniciar = rotasIniciar[modoAtual];
 
         const sse = new EventSource("/progresso");
         sse.onmessage = (e) => {
