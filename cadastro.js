@@ -136,11 +136,28 @@ async function cadastrarPeca(driver, item, comitente) {
   await driver
     .findElement(By.css('button.btn-grey[data-func^="gravacadpeca"]'))
     .click();
-  await driver.sleep(1000);
 
-  // Fechar (modal não fecha sozinho)
+  // Aguardar sucesso OU erro do site
+  await driver.wait(
+    until.elementLocated(By.css("div.alert-success, div.alert-danger")),
+    15000,
+  );
+  await driver.sleep(500);
+
+  const alertEl = await driver.findElement(
+    By.css("div.alert-success, div.alert-danger"),
+  );
+  const alertClass = await alertEl.getAttribute("class");
+  const sucesso = alertClass.includes("alert-success");
+
+  // Fechar sempre (modal não fecha sozinho)
   await driver.findElement(By.css("a.is-backbtn")).click();
   await driver.sleep(500);
+
+  if (!sucesso) {
+    const alertTexto = await alertEl.getText();
+    throw new Error(alertTexto.trim() || "Site retornou erro ao gravar peça");
+  }
 
   return true;
 }
