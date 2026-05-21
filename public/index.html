@@ -2,488 +2,712 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <title>Robô Leilão</title>
+    <title>Robô Leilão — Vini Turbo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap"
+      rel="stylesheet"
+    />
     <style>
+      :root {
+        --bg:      #f4f5f7;
+        --surface: #ffffff;
+        --panel:   #f0f1f3;
+        --border:  #dde0e7;
+        --text:    #1a1a2e;
+        --muted:   #7a7a8e;
+        --mono: "JetBrains Mono", monospace;
+        --display: "Syne", sans-serif;
+
+        --c-leilao: #3d6fff;
+        --c-preco: #22c55e;
+        --c-imagem: #f97316;
+        --c-transferencia: #a855f7;
+        --c-cadastro: #ef4444;
+
+        --accent: var(--c-leilao);
+      }
+
       * {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
       }
+
       body {
-        font-family: Arial, sans-serif;
-        background: #f0f2f5;
+        font-family: var(--mono);
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
         display: flex;
+        align-items: flex-start;
         justify-content: center;
-        padding: 40px 16px;
+        padding: 32px 16px 48px;
       }
-      .card {
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+
+      /* ─── Layout ─────────────────────────────────── */
+      .shell {
         width: 100%;
-        max-width: 560px;
+        max-width: 780px;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+
+      /* ─── Topo ────────────────────────────────────── */
+      .topo {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 0 20px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 24px;
+      }
+      .topo-titulo {
+        font-family: var(--display);
+        font-size: 1.35rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        color: var(--text);
+      }
+      .topo-titulo span {
+        color: var(--accent);
+        transition: color 0.3s;
+      }
+      .topo-tag {
+        font-size: 0.68rem;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        border: 1px solid var(--border);
+        padding: 4px 10px;
+        border-radius: 4px;
+      }
+
+      /* ─── Tabs ────────────────────────────────────── */
+      .tabs {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+        margin-bottom: 24px;
+      }
+      .tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        padding: 12px 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 0.67rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.18s;
+        outline: none;
+        line-height: 1.3;
+        text-align: center;
+      }
+      .tab:hover {
+        color: var(--text);
+        border-color: #b0b4c4;
+        background: var(--panel);
+      }
+      .tab-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--muted);
+        transition:
+          background 0.18s,
+          box-shadow 0.18s;
+        flex-shrink: 0;
+      }
+      .tab.ativo .tab-dot {
+        box-shadow: 0 0 8px currentColor;
+      }
+
+      .tab.ativo-leilao {
+        color: var(--c-leilao);
+        border-color: var(--c-leilao);
+        background: rgba(61, 111, 255, 0.08);
+      }
+      .tab.ativo-preco {
+        color: var(--c-preco);
+        border-color: var(--c-preco);
+        background: rgba(34, 197, 94, 0.08);
+      }
+      .tab.ativo-imagem {
+        color: var(--c-imagem);
+        border-color: var(--c-imagem);
+        background: rgba(249, 115, 22, 0.08);
+      }
+      .tab.ativo-transferencia {
+        color: var(--c-transferencia);
+        border-color: var(--c-transferencia);
+        background: rgba(168, 85, 247, 0.08);
+      }
+      .tab.ativo-cadastro {
+        color: var(--c-cadastro);
+        border-color: var(--c-cadastro);
+        background: rgba(239, 68, 68, 0.08);
+      }
+
+      .tab.ativo-leilao .tab-dot {
+        background: var(--c-leilao);
+      }
+      .tab.ativo-preco .tab-dot {
+        background: var(--c-preco);
+      }
+      .tab.ativo-imagem .tab-dot {
+        background: var(--c-imagem);
+      }
+      .tab.ativo-transferencia .tab-dot {
+        background: var(--c-transferencia);
+      }
+      .tab.ativo-cadastro .tab-dot {
+        background: var(--c-cadastro);
+      }
+
+      /* ─── Painel principal ────────────────────────── */
+      .painel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
         overflow: hidden;
       }
 
-      /* ── Seletor de robô ── */
-      .robo-selector {
+      .painel-header {
         display: flex;
-        border-bottom: 1px solid #e0e0e0;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        background: var(--panel);
       }
-      .robo-tab {
-        flex: 1;
-        padding: 16px 12px;
-        text-align: center;
-        font-size: 0.95rem;
-        font-weight: bold;
-        cursor: pointer;
-        border: none;
-        background: #f5f5f5;
-        color: #666;
+      .painel-header-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 10px var(--accent);
         transition:
-          background 0.2s,
-          color 0.2s;
-        outline: none;
+          background 0.3s,
+          box-shadow 0.3s;
+        flex-shrink: 0;
       }
-      .robo-tab:first-child {
-        border-radius: 8px 0 0 0;
-        border-right: 1px solid #e0e0e0;
+      .painel-header-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--accent);
+        transition: color 0.3s;
       }
-      .robo-tab:last-child {
-        border-radius: 0 8px 0 0;
-      }
-      .robo-tab:not(:first-child):not(:last-child) {
-        border-right: 1px solid #e0e0e0;
-      }
-      .robo-tab.ativo-leilao {
-        background: #000144;
-        color: #fff;
-      }
-      .robo-tab.ativo-preco {
-        background: #1b5e20;
-        color: #fff;
-      }
-      .robo-tab.ativo-imagem {
-        background: #e65100;
-        color: #fff;
-      }
-      .robo-tab.ativo-transferencia {
-        background: #6a1b9a;
-        color: #fff;
-      }
-      .robo-tab.ativo-cadastro {
-        background: #b71c1c;
-        color: #fff;
-      }
-      .robo-tab:not(.ativo-leilao):not(.ativo-preco):not(.ativo-imagem):not(
-          .ativo-transferencia
-        ):not(.ativo-cadastro):hover {
-        background: #e8e8e8;
+      .painel-header-hint {
+        margin-left: auto;
+        font-size: 0.62rem;
+        color: var(--muted);
+        font-weight: 400;
       }
 
-      .card-header {
-        padding: 16px 24px 14px;
-        font-size: 1.1rem;
-        font-weight: bold;
-        color: #fff;
-        transition: background 0.2s;
-      }
-      .card-header.header-leilao {
-        background: #000144;
-      }
-      .card-header.header-preco {
-        background: #1b5e20;
-      }
-      .card-header.header-imagem {
-        background: #e65100;
-      }
-      .card-header.header-transferencia {
-        background: #6a1b9a;
-      }
-      .card-header.header-cadastro {
-        background: #b71c1c;
-      }
-
-      .card-body {
+      .painel-body {
         padding: 24px;
       }
 
-      label {
-        display: block;
-        font-size: 0.85rem;
-        color: #555;
-        margin-bottom: 4px;
-        margin-top: 16px;
+      /* ─── Form ────────────────────────────────────── */
+      .campo {
+        margin-bottom: 16px;
       }
-      label:first-child {
-        margin-top: 0;
-      }
-      input[type="text"],
-      input[type="password"],
-      input[type="file"] {
-        width: 100%;
-        padding: 9px 12px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 0.95rem;
-      }
-      input[type="file"] {
-        padding: 6px;
+      .campo:last-of-type {
+        margin-bottom: 0;
       }
 
+      .campo-label {
+        display: block;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .campo-hint {
+        display: block;
+        font-size: 0.6rem;
+        color: #9598a8;
+        margin-top: 3px;
+        line-height: 1.5;
+        word-break: break-all;
+      }
+
+      input[type="text"],
+      input[type="password"] {
+        width: 100%;
+        padding: 10px 14px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 0.88rem;
+        outline: none;
+        transition: border-color 0.18s;
+      }
+      input[type="text"]:focus,
+      input[type="password"]:focus {
+        border-color: var(--accent);
+      }
+      input[type="text"]::placeholder,
+      input[type="password"]::placeholder {
+        color: #b0b4c4;
+      }
+
+      .file-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        background: var(--bg);
+        border: 1px dashed var(--border);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: border-color 0.18s;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .file-label:hover {
+        border-color: var(--accent);
+        color: var(--text);
+      }
+      .file-label input {
+        display: none;
+      }
+      .file-icon {
+        font-size: 1rem;
+      }
+      #nomeArquivo {
+        font-size: 0.75rem;
+      }
+
+      /* ─── Erro ────────────────────────────────────── */
       .msg-erro {
         display: none;
-        margin-top: 12px;
+        margin-top: 14px;
         padding: 10px 14px;
-        background: #fdecea;
-        border: 1px solid #f5c6cb;
-        border-radius: 4px;
-        color: #c62828;
-        font-size: 0.88rem;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 6px;
+        color: #dc2626;
+        font-size: 0.78rem;
+        line-height: 1.5;
       }
 
-      /* Confirmação */
+      /* ─── Botão validar ───────────────────────────── */
+      .btn-validar {
+        margin-top: 20px;
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 6px;
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #fff;
+        cursor: pointer;
+        background: var(--accent);
+        transition:
+          opacity 0.18s,
+          transform 0.1s;
+      }
+      .btn-validar:hover:not(:disabled) {
+        opacity: 0.88;
+        transform: translateY(-1px);
+      }
+      .btn-validar:active:not(:disabled) {
+        transform: translateY(0);
+      }
+      .btn-validar:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      /* ─── Confirmação ─────────────────────────────── */
       #secaoConfirmacao {
         display: none;
         margin-top: 20px;
         padding: 16px;
-        background: #fff8e1;
-        border: 1px solid #ffe082;
-        border-radius: 6px;
+        background: rgba(255, 200, 50, 0.05);
+        border: 1px solid rgba(255, 200, 50, 0.2);
+        border-radius: 8px;
       }
-      #secaoConfirmacao p {
-        font-size: 0.95rem;
-        color: #555;
+      .conf-texto {
+        font-size: 0.78rem;
+        color: #c8c8d8;
         margin-bottom: 14px;
+        line-height: 1.6;
       }
-      #secaoConfirmacao strong {
-        color: #333;
+      .conf-texto strong {
+        color: var(--text);
       }
       .btn-row {
         display: flex;
-        gap: 10px;
+        gap: 8px;
       }
       .btn-confirmar {
         flex: 1;
         padding: 10px;
-        background: #2e7d32;
+        background: var(--accent);
         color: #fff;
         border: none;
-        border-radius: 4px;
-        font-size: 0.95rem;
+        border-radius: 6px;
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
         cursor: pointer;
-        font-weight: bold;
+        transition: opacity 0.18s;
       }
       .btn-confirmar:hover {
-        background: #1b5e20;
+        opacity: 0.85;
+      }
+      .btn-confirmar:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
       }
       .btn-cancelar {
         flex: 1;
         padding: 10px;
-        background: #eee;
-        color: #333;
-        border: none;
-        border-radius: 4px;
-        font-size: 0.95rem;
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        font-weight: 600;
         cursor: pointer;
+        transition:
+          color 0.18s,
+          border-color 0.18s;
       }
       .btn-cancelar:hover {
-        background: #ddd;
+        color: var(--text);
+        border-color: #4a4a55;
       }
 
-      button#btnValidar {
-        margin-top: 20px;
-        width: 100%;
-        padding: 11px;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        font-size: 1rem;
-        cursor: pointer;
-        font-weight: bold;
-        transition: background 0.2s;
-      }
-      button#btnValidar.btn-leilao {
-        background: #000144;
-      }
-      button#btnValidar.btn-leilao:hover:not(:disabled) {
-        background: #00026d;
-      }
-      button#btnValidar.btn-preco {
-        background: #2e7d32;
-      }
-      button#btnValidar.btn-preco:hover:not(:disabled) {
-        background: #1b5e20;
-      }
-      button#btnValidar.btn-imagem {
-        background: #e65100;
-      }
-      button#btnValidar.btn-imagem:hover:not(:disabled) {
-        background: #bf360c;
-      }
-      button#btnValidar.btn-transferencia {
-        background: #6a1b9a;
-      }
-      button#btnValidar.btn-transferencia:hover:not(:disabled) {
-        background: #4a148c;
-      }
-      button#btnValidar.btn-cadastro {
-        background: #b71c1c;
-      }
-      button#btnValidar.btn-cadastro:hover:not(:disabled) {
-        background: #7f0000;
-      }
-      button#btnValidar:disabled {
-        background: #ccc;
-        cursor: not-allowed;
-      }
-
-      /* Badge de modo */
-      .badge-modo {
-        display: inline-block;
-        font-size: 0.75rem;
-        font-weight: bold;
-        padding: 2px 8px;
-        border-radius: 10px;
-        margin-left: 8px;
-        vertical-align: middle;
-      }
-      .badge-leilao {
-        background: rgba(255, 255, 255, 0.25);
-        color: #fff;
-      }
-      .badge-preco {
-        background: rgba(255, 255, 255, 0.25);
-        color: #fff;
-      }
-
-      /* Dica de CSV */
-      .csv-hint {
-        display: inline-block;
-        margin-top: 4px;
-        font-size: 0.78rem;
-        color: #888;
-      }
-
-      /* Progresso */
+      /* ─── Progresso ───────────────────────────────── */
       #secaoProgresso {
         display: none;
-        margin-top: 24px;
-        border-top: 1px solid #eee;
-        padding-top: 20px;
+        margin-top: 20px;
+      }
+      .prog-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 8px;
       }
       #statusMsg {
-        font-size: 0.9rem;
-        color: #555;
-        margin-bottom: 10px;
-      }
-      progress {
-        width: 100%;
-        height: 16px;
-        border-radius: 4px;
-        appearance: none;
-      }
-      progress::-webkit-progress-bar {
-        background: #eee;
-        border-radius: 4px;
-      }
-      progress.prog-leilao::-webkit-progress-value {
-        background: #00026d;
-        border-radius: 4px;
-      }
-      progress.prog-preco::-webkit-progress-value {
-        background: #2e7d32;
-        border-radius: 4px;
-      }
-      progress.prog-imagem::-webkit-progress-value {
-        background: #e65100;
-        border-radius: 4px;
-      }
-      progress.prog-transferencia::-webkit-progress-value {
-        background: #6a1b9a;
-        border-radius: 4px;
-      }
-      progress.prog-cadastro::-webkit-progress-value {
-        background: #b71c1c;
-        border-radius: 4px;
+        font-size: 0.72rem;
+        color: var(--muted);
+        max-width: 70%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       #contadores {
-        font-size: 0.85rem;
-        color: #555;
-        text-align: right;
-        margin-top: 4px;
+        font-size: 0.72rem;
+        color: var(--accent);
+        font-weight: 700;
+        transition: color 0.3s;
       }
 
+      .prog-track {
+        width: 100%;
+        height: 3px;
+        background: var(--border);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 16px;
+      }
+      .prog-fill {
+        height: 100%;
+        width: 0%;
+        background: var(--accent);
+        border-radius: 2px;
+        transition:
+          width 0.4s ease,
+          background 0.3s;
+        box-shadow: 0 0 8px var(--accent);
+      }
+
+      /* ─── Log terminal ────────────────────────────── */
       #log {
-        margin-top: 14px;
-        height: 240px;
+        height: 220px;
         overflow-y: auto;
         background: #1e1e1e;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 12px 14px;
+        font-size: 0.73rem;
+        line-height: 1.7;
         color: #d4d4d4;
-        font-family: monospace;
-        font-size: 0.82rem;
-        padding: 10px 12px;
-        border-radius: 4px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border) transparent;
       }
-      .log-sucesso {
-        color: #4ec9b0;
+      #log::-webkit-scrollbar {
+        width: 4px;
       }
-      .log-erro {
-        color: #f44747;
+      #log::-webkit-scrollbar-track {
+        background: transparent;
       }
-      .log-aviso {
-        color: #dcdcaa;
+      #log::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 2px;
       }
-      .log-info {
-        color: #9cdcfe;
+
+      .log-sucesso { color: #4ade80; }
+      .log-erro    { color: #f87171; }
+      .log-aviso   { color: #fbbf24; }
+      .log-info    { color: #60a5fa; }
+
+      /* ─── Resumo e download ───────────────────────── */
+      #resumoFinal {
+        display: none;
+        margin-top: 14px;
+        padding: 12px 16px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 0.78rem;
+        text-align: center;
+        letter-spacing: 0.04em;
       }
 
       #btnDownload {
         display: none;
-        margin-top: 16px;
+        margin-top: 10px;
         width: 100%;
-        padding: 10px;
-        background: #2e7d32;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        font-size: 0.95rem;
+        padding: 11px;
+        background: transparent;
+        color: var(--c-preco);
+        border: 1px solid var(--c-preco);
+        border-radius: 6px;
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
         cursor: pointer;
-        font-weight: bold;
+        transition:
+          background 0.18s,
+          color 0.18s;
       }
       #btnDownload:hover {
-        background: #1b5e20;
+        background: var(--c-preco);
+        color: #000;
       }
-      #resumoFinal {
-        display: none;
-        margin-top: 12px;
-        font-size: 0.9rem;
-        font-weight: bold;
-        text-align: center;
+
+      /* ─── Responsivo ──────────────────────────────── */
+      @media (max-width: 520px) {
+        .tabs {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        .topo-titulo {
+          font-size: 1.1rem;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="card">
-      <!-- Seletor de robô -->
-      <div class="robo-selector">
+    <div class="shell">
+      <!-- Topo -->
+      <div class="topo">
+        <div class="topo-titulo">ROBÔ<span id="topoAcento">_</span>LEILÃO</div>
+        <div class="topo-tag">VINI TURBO 3.0</div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
         <button
-          class="robo-tab ativo-leilao"
+          class="tab ativo ativo-leilao"
           id="tabLeilao"
           onclick="selecionarRobo('leilao')"
         >
-          🔵 Transferir Leilão
+          <span class="tab-dot"></span>
+          Transferir<br />Leilão
+        </button>
+        <button class="tab" id="tabPreco" onclick="selecionarRobo('preco')">
+          <span class="tab-dot"></span>
+          Atualizar<br />Preço
+        </button>
+        <button class="tab" id="tabImagem" onclick="selecionarRobo('imagem')">
+          <span class="tab-dot"></span>
+          Upload<br />Imagens
         </button>
         <button
-          class="robo-tab"
-          id="tabPreco"
-          onclick="selecionarRobo('preco')"
-        >
-          🟢 Atualizar Preço
-        </button>
-        <button
-          class="robo-tab"
-          id="tabImagem"
-          onclick="selecionarRobo('imagem')"
-        >
-          🟠 Upload Imagens
-        </button>
-        <button
-          class="robo-tab"
+          class="tab"
           id="tabTransferencia"
           onclick="selecionarRobo('transferencia')"
         >
-          🟣 Transferir c/ Valor
+          <span class="tab-dot"></span>
+          Transfer.<br />c/ Valor
         </button>
         <button
-          class="robo-tab"
+          class="tab"
           id="tabCadastro"
           onclick="selecionarRobo('cadastro')"
         >
-          🔴 Cadastrar Peças
+          <span class="tab-dot"></span>
+          Cadastrar<br />Peças
         </button>
       </div>
 
-      <!-- Cabeçalho dinâmico -->
-      <div class="card-header header-leilao" id="cardHeader">
-        🤖 Robô Leilão - Vini Turbo 3.0
-        <span class="badge-modo badge-leilao" id="badgeModo"
-          >TRANSFERÊNCIA DE LEILÕES</span
-        >
-      </div>
-
-      <div class="card-body">
-        <!-- Etapa 1: formulário -->
-        <form id="form">
-          <label>Usuário</label>
-          <input
-            type="text"
-            name="username"
-            placeholder="Ex: USERLEILAO"
-            required
-          />
-
-          <label>Senha</label>
-          <input type="password" name="password" required />
-
-          <label>Número do Leilão</label>
-          <input
-            type="text"
-            name="numeroLeilao"
-            placeholder="Ex: 58695"
-            required
-          />
-
-          <label>
-            Arquivo CSV
-            <span class="csv-hint" id="csvHint">
-              Colunas: lote, dia, mini_descricao, numero_leilao
-            </span>
-          </label>
-          <input type="file" name="csv" accept=".csv" required />
-
-          <div class="msg-erro" id="msgErro"></div>
-
-          <button type="submit" id="btnValidar" class="btn-leilao">
-            Carregar e Validar CSV
-          </button>
-        </form>
-
-        <!-- Etapa 2: confirmação -->
-        <div id="secaoConfirmacao">
-          <p>CSV validado com sucesso. <strong id="txtTotal"></strong></p>
-          <p>
-            Deseja iniciar o robô agora? O Chrome será aberto automaticamente.
-          </p>
-          <div class="btn-row">
-            <button class="btn-confirmar" id="btnConfirmar">
-              ✔ Sim, iniciar o robô
-            </button>
-            <button class="btn-cancelar" id="btnCancelar">✖ Cancelar</button>
+      <!-- Painel -->
+      <div class="painel">
+        <div class="painel-header">
+          <div class="painel-header-dot" id="headerDot"></div>
+          <div class="painel-header-label" id="headerLabel">
+            TRANSFERÊNCIA DE LEILÕES
           </div>
+          <div class="painel-header-hint" id="headerHint"></div>
         </div>
 
-        <!-- Etapa 3: progresso -->
-        <div id="secaoProgresso">
-          <div id="statusMsg">Aguardando...</div>
-          <progress
-            id="barra"
-            value="0"
-            max="100"
-            class="prog-leilao"
-          ></progress>
-          <div id="contadores">0 / 0</div>
-          <div id="log"></div>
-          <div id="resumoFinal"></div>
-          <button id="btnDownload">⬇ Baixar Relatório CSV</button>
+        <div class="painel-body">
+          <!-- Etapa 1 -->
+          <form id="form">
+            <div class="campo">
+              <label class="campo-label">Usuário</label>
+              <input
+                type="text"
+                name="username"
+                placeholder="USERLEILAO"
+                required
+              />
+            </div>
+            <div class="campo">
+              <label class="campo-label">Senha</label>
+              <input type="password" name="password" required />
+            </div>
+            <div class="campo">
+              <label class="campo-label">Número do Leilão</label>
+              <input
+                type="text"
+                name="numeroLeilao"
+                placeholder="Ex: 58695"
+                required
+              />
+            </div>
+            <div class="campo">
+              <label class="campo-label">
+                Arquivo CSV
+                <span class="campo-hint" id="csvHint"
+                  >lote, dia, mini_descricao, numero_leilao</span
+                >
+              </label>
+              <label class="file-label">
+                <span class="file-icon">📂</span>
+                <span id="nomeArquivo">Selecionar arquivo .csv</span>
+                <input
+                  type="file"
+                  name="csv"
+                  accept=".csv"
+                  required
+                  id="inputFile"
+                />
+              </label>
+            </div>
+
+            <div class="msg-erro" id="msgErro"></div>
+
+            <button type="submit" id="btnValidar" class="btn-validar">
+              Carregar e Validar CSV
+            </button>
+          </form>
+
+          <!-- Etapa 2: confirmação -->
+          <div id="secaoConfirmacao">
+            <div class="conf-texto">
+              CSV validado — <strong id="txtTotal"></strong><br />
+              Deseja iniciar o robô? O Chrome será aberto automaticamente.
+            </div>
+            <div class="btn-row">
+              <button class="btn-confirmar" id="btnConfirmar">▶ Iniciar</button>
+              <button class="btn-cancelar" id="btnCancelar">✕ Cancelar</button>
+            </div>
+          </div>
+
+          <!-- Etapa 3: progresso -->
+          <div id="secaoProgresso">
+            <div class="prog-header">
+              <div id="statusMsg">Aguardando...</div>
+              <div id="contadores">0 / 0</div>
+            </div>
+            <div class="prog-track">
+              <div class="prog-fill" id="progFill"></div>
+            </div>
+            <div id="log"></div>
+            <div id="resumoFinal"></div>
+            <button id="btnDownload">⬇ Baixar Relatório CSV</button>
+          </div>
         </div>
       </div>
     </div>
 
     <script>
-      // ── Estado global ──
-      let modoAtual = "leilao"; // "leilao" | "preco" | "imagem" | "transferencia" | "cadastro"
+      let modoAtual = "leilao";
       let relatorioCSV = "";
+
+      const MODOS = {
+        leilao: {
+          cor: "#3d6fff",
+          label: "TRANSFERÊNCIA DE LEILÕES",
+          hint: "lote, dia, mini_descricao, numero_leilao",
+        },
+        preco: {
+          cor: "#22c55e",
+          label: "ATUALIZAÇÃO DE PREÇO",
+          hint: "mini_descricao, novo_valor",
+        },
+        imagem: {
+          cor: "#f97316",
+          label: "UPLOAD DE IMAGENS",
+          hint: "mini_descricao, key_principal, key_extra_1…5",
+        },
+        transferencia: {
+          cor: "#a855f7",
+          label: "TRANSFERÊNCIA COM VALOR",
+          hint: "Lote, Dia, MiniDescrição, NumeroLeilao, Novo_Valor",
+        },
+        cadastro: {
+          cor: "#ef4444",
+          label: "CADASTRO DE PEÇAS",
+          hint: "item, peca, lote, dia, preco_contratado, descricao, segunda_descricao",
+        },
+      };
+
+      const ROTAS_VALIDAR = {
+        leilao: "/validar",
+        preco: "/validar-preco",
+        imagem: "/validar-imagem",
+        transferencia: "/validar-transferencia",
+        cadastro: "/validar-cadastro",
+      };
+      const ROTAS_INICIAR = {
+        leilao: "/iniciar",
+        preco: "/iniciar-preco",
+        imagem: "/iniciar-imagem",
+        transferencia: "/iniciar-transferencia",
+        cadastro: "/iniciar-cadastro",
+      };
 
       const form = document.getElementById("form");
       const btnValidar = document.getElementById("btnValidar");
@@ -494,82 +718,57 @@
       const btnCancelar = document.getElementById("btnCancelar");
       const secaoProg = document.getElementById("secaoProgresso");
       const statusMsg = document.getElementById("statusMsg");
-      const barra = document.getElementById("barra");
+      const progFill = document.getElementById("progFill");
       const contadores = document.getElementById("contadores");
       const log = document.getElementById("log");
       const btnDownload = document.getElementById("btnDownload");
       const resumoFinal = document.getElementById("resumoFinal");
-      const cardHeader = document.getElementById("cardHeader");
-      const badgeModo = document.getElementById("badgeModo");
-      const tabLeilao = document.getElementById("tabLeilao");
-      const tabPreco = document.getElementById("tabPreco");
-      const tabImagem = document.getElementById("tabImagem");
-      const tabTransferencia = document.getElementById("tabTransferencia");
-      const tabCadastro = document.getElementById("tabCadastro");
+      const headerDot = document.getElementById("headerDot");
+      const headerLabel = document.getElementById("headerLabel");
+      const headerHint = document.getElementById("headerHint");
       const csvHint = document.getElementById("csvHint");
+      const topoAcento = document.getElementById("topoAcento");
+      const inputFile = document.getElementById("inputFile");
+      const nomeArquivo = document.getElementById("nomeArquivo");
 
-      // ── Troca de modo ──
+      inputFile.addEventListener("change", () => {
+        nomeArquivo.textContent =
+          inputFile.files[0]?.name || "Selecionar arquivo .csv";
+      });
+
       function selecionarRobo(modo) {
         modoAtual = modo;
+        const m = MODOS[modo];
 
-        // Tabs
-        tabLeilao.className =
-          "robo-tab" + (modo === "leilao" ? " ativo-leilao" : "");
-        tabPreco.className =
-          "robo-tab" + (modo === "preco" ? " ativo-preco" : "");
-        tabImagem.className =
-          "robo-tab" + (modo === "imagem" ? " ativo-imagem" : "");
-        tabTransferencia.className =
-          "robo-tab" + (modo === "transferencia" ? " ativo-transferencia" : "");
-        tabCadastro.className =
-          "robo-tab" + (modo === "cadastro" ? " ativo-cadastro" : "");
+        document.querySelectorAll(".tab").forEach((t) => {
+          t.className = "tab";
+        });
+        const tabAtivo = document.getElementById(
+          "tab" + modo.charAt(0).toUpperCase() + modo.slice(1),
+        );
+        tabAtivo.className = `tab ativo ativo-${modo}`;
 
-        // Header
-        cardHeader.className = "card-header header-" + modo;
-        if (modo === "leilao") {
-          cardHeader.innerHTML =
-            '🤖 Robô Leilão - Vini Turbo 3.0 <span class="badge-modo badge-leilao">TRANSFERÊNCIA DE LEILÕES</span>';
-          csvHint.textContent =
-            "Colunas: lote, dia, mini_descricao, numero_leilao";
-          btnValidar.className = "btn-leilao";
-          barra.className = "prog-leilao";
-        } else if (modo === "preco") {
-          cardHeader.innerHTML =
-            '🤖 Robô Preço - Vini Turbo 3.0 <span class="badge-modo badge-preco">ATUALIZAÇÃO DE PREÇO</span>';
-          csvHint.textContent = "Colunas: mini_descricao, novo_valor";
-          btnValidar.className = "btn-preco";
-          barra.className = "prog-preco";
-        } else if (modo === "imagem") {
-          cardHeader.innerHTML =
-            '🤖 Robô Imagens - Vini Turbo 3.0 <span class="badge-modo" style="background:rgba(255,255,255,0.25);color:#fff">UPLOAD DE IMAGENS</span>';
-          csvHint.textContent =
-            "Colunas: mini_descricao,key_principal,key_extra_1,key_extra_2,key_extra_3,key_extra_4,key_extra_5";
-          btnValidar.className = "btn-imagem";
-          barra.className = "prog-imagem";
-        } else if (modo === "transferencia") {
-          cardHeader.innerHTML =
-            '🤖 Robô Transferência c/ Valor - Vini Turbo 3.0 <span class="badge-modo" style="background:rgba(255,255,255,0.25);color:#fff">TRANSFERÊNCIA COM VALOR</span>';
-          csvHint.textContent =
-            "Colunas: Lote, Dia, MiniDescrição, NumeroLeilao, Novo_Valor";
-          btnValidar.className = "btn-transferencia";
-          barra.className = "prog-transferencia";
-        } else {
-          cardHeader.innerHTML =
-            '🤖 Robô Cadastro - Vini Turbo 3.0 <span class="badge-modo" style="background:rgba(255,255,255,0.25);color:#fff">CADASTRO DE PEÇAS</span>';
-          csvHint.textContent =
-            "Colunas: item, peca, lote, dia, preco_contratado, descricao, segunda_descricao";
-          btnValidar.className = "btn-cadastro";
-          barra.className = "prog-cadastro";
-        }
+        headerDot.style.background = m.cor;
+        headerDot.style.boxShadow = `0 0 10px ${m.cor}`;
+        headerLabel.style.color = m.cor;
+        headerLabel.textContent = m.label;
+        headerHint.textContent = "";
+        csvHint.textContent = m.hint;
+        btnValidar.style.background = m.cor;
+        progFill.style.background = m.cor;
+        progFill.style.boxShadow = `0 0 8px ${m.cor}`;
+        contadores.style.color = m.cor;
+        topoAcento.style.color = m.cor;
 
-        // Ocultar etapas anteriores ao trocar
+        document.documentElement.style.setProperty("--accent", m.cor);
+
         secaoConf.style.display = "none";
         secaoProg.style.display = "none";
         limparErro();
         form.reset();
+        nomeArquivo.textContent = "Selecionar arquivo .csv";
       }
 
-      // ── Utilitários ──
       function mostrarErro(msg) {
         msgErro.textContent = msg;
         msgErro.style.display = "block";
@@ -586,7 +785,6 @@
         log.scrollTop = log.scrollHeight;
       }
 
-      // ── Etapa 1 — validar CSV ──
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         limparErro();
@@ -594,34 +792,24 @@
         btnValidar.textContent = "Validando...";
 
         const data = new FormData(form);
-        const rotasValidar = {
-          leilao: "/validar",
-          preco: "/validar-preco",
-          imagem: "/validar-imagem",
-          transferencia: "/validar-transferencia",
-          cadastro: "/validar-cadastro",
-        };
-        const rota = rotasValidar[modoAtual];
-
         try {
-          const resp = await fetch(rota, { method: "POST", body: data });
+          const resp = await fetch(ROTAS_VALIDAR[modoAtual], {
+            method: "POST",
+            body: data,
+          });
           const json = await resp.json();
-
           if (!resp.ok || json.erro) {
             mostrarErro(json.erro || "Erro desconhecido.");
             btnValidar.disabled = false;
             btnValidar.textContent = "Carregar e Validar CSV";
             return;
           }
-
           const unidade =
-            modoAtual === "leilao" || modoAtual === "transferencia"
-              ? "lote(s)"
-              : modoAtual === "imagem"
-                ? "peça(s)"
-                : modoAtual === "cadastro"
-                  ? "peça(s)"
-                  : "item(ns)";
+            modoAtual === "cadastro" || modoAtual === "imagem"
+              ? "peça(s)"
+              : modoAtual === "preco"
+                ? "item(ns)"
+                : "lote(s)";
           txtTotal.textContent = `${json.total} ${unidade} encontrado(s).`;
           secaoConf.style.display = "block";
           btnValidar.disabled = false;
@@ -633,16 +821,14 @@
         }
       });
 
-      // Cancelar
       btnCancelar.addEventListener("click", () => {
         secaoConf.style.display = "none";
       });
 
-      // ── Etapa 2 — confirmar e iniciar ──
       btnConfirmar.addEventListener("click", async () => {
         secaoConf.style.display = "none";
         log.innerHTML = "";
-        barra.value = 0;
+        progFill.style.width = "0%";
         contadores.textContent = "0 / 0";
         resumoFinal.style.display = "none";
         btnDownload.style.display = "none";
@@ -651,27 +837,17 @@
         statusMsg.textContent = "Iniciando...";
         btnConfirmar.disabled = true;
 
-        const rotasIniciar = {
-          leilao: "/iniciar",
-          preco: "/iniciar-preco",
-          imagem: "/iniciar-imagem",
-          transferencia: "/iniciar-transferencia",
-          cadastro: "/iniciar-cadastro",
-        };
-        const rotaIniciar = rotasIniciar[modoAtual];
-
         const sse = new EventSource("/progresso");
         sse.onmessage = (e) => {
           const d = JSON.parse(e.data);
-
           if (d.tipo === "status") {
             statusMsg.textContent = d.msg;
             addLog(d.msg, "log-info");
           } else if (d.tipo === "progresso") {
-            statusMsg.textContent = `[${d.indice}/${d.total}] Processando: ${d.descricao}`;
+            statusMsg.textContent = `[${d.indice}/${d.total}] ${d.descricao}`;
           } else if (d.tipo === "lote") {
             const pct = Math.round((d.indice / d.total) * 100);
-            barra.value = pct;
+            progFill.style.width = pct + "%";
             contadores.textContent = `${d.indice} / ${d.total}`;
             if (d.status === "sucesso") {
               addLog(
@@ -680,7 +856,7 @@
               );
             } else {
               addLog(
-                `⚠ [${d.indice}/${d.total}] ${d.descricao} — ${d.motivo}`,
+                `✗ [${d.indice}/${d.total}] ${d.descricao} — ${d.motivo}`,
                 "log-erro",
               );
             }
@@ -690,21 +866,17 @@
             sse.close();
             btnConfirmar.disabled = false;
           } else if (d.tipo === "fim") {
-            barra.value = 100;
-            statusMsg.textContent = "Concluído!";
+            progFill.style.width = "100%";
+            statusMsg.textContent = "Concluído.";
             relatorioCSV = d.relatorioCSV;
             resumoFinal.style.display = "block";
-            resumoFinal.innerHTML = `✓ Sucesso: <span style="color:#2e7d32">${d.sucesso}</span> &nbsp;|&nbsp; ✗ Erros: <span style="color:#c62828">${d.erros}</span>`;
+            resumoFinal.innerHTML = `<span style="color:#16a34a">✓ ${d.sucesso} sucesso</span> &nbsp;·&nbsp; <span style="color:#dc2626">✗ ${d.erros} erros</span>`;
             btnDownload.style.display = "block";
-            addLog(
-              `\nFinalizado! Sucesso: ${d.sucesso} | Erros: ${d.erros}`,
-              "log-aviso",
-            );
+            addLog(`\n— Finalizado: ${d.sucesso} ✓  ${d.erros} ✗`, "log-aviso");
             sse.close();
             btnConfirmar.disabled = false;
           }
         };
-
         sse.onerror = () => {
           addLog("Conexão SSE perdida.", "log-erro");
           sse.close();
@@ -712,7 +884,9 @@
         };
 
         try {
-          const resp = await fetch(rotaIniciar, { method: "POST" });
+          const resp = await fetch(ROTAS_INICIAR[modoAtual], {
+            method: "POST",
+          });
           const json = await resp.json();
           if (!resp.ok || json.erro) {
             addLog("Erro ao iniciar: " + (json.erro || "falha"), "log-erro");
@@ -726,9 +900,8 @@
         }
       });
 
-      // ── Download relatório ──
       btnDownload.addEventListener("click", () => {
-        const blob = new Blob(["\uFEFF" + relatorioCSV], {
+        const blob = new Blob(["﻿" + relatorioCSV], {
           type: "text/csv;charset=utf-8;",
         });
         const url = URL.createObjectURL(blob);
@@ -738,6 +911,9 @@
         a.click();
         URL.revokeObjectURL(url);
       });
+
+      // init accent
+      selecionarRobo("leilao");
     </script>
   </body>
 </html>
