@@ -13,6 +13,7 @@ const {
 const { validarHeaderCSVPreco, atualizarPreco } = require("./preco");
 const { validarHeaderCSVImagem, uploadImagem } = require("./imagem");
 const { validarHeaderCSVTransferencia, transferirComValor } = require("./transferencia");
+const { validarHeaderCSVCadastro, navegarParaCadastro, cadastrarPeca } = require("./cadastro");
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -526,6 +527,124 @@ app.post("/iniciar-transferencia", (req, res) => {
       ),
       ...resultados.erro.map(
         (r) => `erro,${r.lote},${r.mini_descricao},${r.numero_leilao},${r.novo_valor},"${r.motivo}"`,
+      ),
+    ];
+
+    emit({
+      tipo: "fim",
+      sucesso: resultados.sucesso.length,
+      erros: resultados.erro.length,
+      relatorioCSV: linhas.join("\n"),
+    });
+  })();
+});
+
+// ─── Robô Cadastro ──────────────────────────────────────────────────────────
+
+const COMITENTE_CADASTRO = "257103";
+
+app.post("/validar-cadastro", upload.single("csv"), (req, res) => {
+  const { username, password, numeroLeilao } = req.body;
+
+  if (!req.file || !username || !password || !numeroLeilao) {
+    return res
+      .status(400)
+      .json({ erro: "Preencha todos os campos e envie o CSV." });
+  }
+
+  let lotes;
+  try {
+    lotes = lerCSVBuffer(req.file.buffer);
+  } catch (e) {
+    return res
+      .status(400)
+      .json({ erro: "Não foi possível ler o CSV: " + e.message });
+  }
+
+  const erroHeader = validarHeaderCSVCadastro(lotes);
+  if (erroHeader) {
+    return res.status(400).json({ erro: erroHeader });
+  }
+
+  req.app.locals.pendenteCadastro = { username, password, numeroLeilao, lotes };
+  res.json({ ok: true, total: lotes.length });
+});
+
+app.post("/iniciar-cadastro", (req, res) => {
+  const pendente = req.app.locals.pendenteCadastro;
+
+  if (!pendente) {
+    return res.status(400).json({
+      erro: "Nenhuma sessão pendente. Faça o upload do CSV primeiro.",
+    });
+  }
+
+  req.app.locals.pendenteCadastro = null;
+  res.json({ ok: true });
+
+  const { username, password, numeroLeilao, lotes } = pendente;
+
+  (async () => {
+    const resultados = { sucesso: [], erro: [] };
+    let driver;
+
+    try {
+      emit({ tipo: "status", msg: "Iniciando Chrome..." });
+      driver = await criarDriver();
+
+      emit({ tipo: "status", msg: "Fazendo login..." });
+      await fazerLogin(driver, username, password, numeroLeilao);
+
+      emit({ tipo: "status", msg: "Navegando para Cadastro de Peças..." });
+      await navegarParaCadastro(driver, COMITENTE_CADASTRO);
+      emit({ tipo: "status", msg: "Pronto. Cadastrando peças..." });
+
+      for (let i = 0; i < lotes.length; i++) {
+        const item = lotes[i];
+        emit({
+          tipo: "progresso",
+          indice: i + 1,
+          total: lotes.length,
+          descricao: item.peca || item.item,
+        });
+
+        try {
+          await cadastrarPeca(driver, item, COMITENTE_CADASTRO);
+          resultados.sucesso.push(item);
+          emit({
+            tipo: "lote",
+            indice: i + 1,
+            total: lotes.length,
+            descricao: item.peca || item.item,
+            status: "sucesso",
+          });
+        } catch (e) {
+          resultados.erro.push({ ...item, motivo: e.message });
+          emit({
+            tipo: "lote",
+            indice: i + 1,
+            total: lotes.length,
+            descricao: item.peca || item.item,
+            status: "erro",
+            motivo: e.message,
+          });
+        }
+
+        await driver.sleep(500);
+      }
+    } catch (e) {
+      emit({ tipo: "erro_fatal", msg: e.message });
+    } finally {
+      if (driver) await driver.quit();
+    }
+
+    const linhas = [
+      "Status,item,lote,peca,Motivo",
+      ...resultados.sucesso.map(
+        (r) => `sucesso,${r.item},${r.lote},"${r.peca}",`,
+      ),
+      ...resultados.erro.map(
+        (r) => `erro,${r.item},${r.lote},"${r.peca}","${r.motivo}"`,
       ),
     ];
 

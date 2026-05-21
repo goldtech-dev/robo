@@ -14,17 +14,46 @@ function normalizarHeader(h) {
     .replace(/\s+/g, "_");
 }
 
+// Parser CSV que respeita campos entre aspas duplas (RFC 4180)
+function parseLinha(line, sep) {
+  const fields = [];
+  let cur = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"' && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        cur += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === sep) {
+      fields.push(cur.trim());
+      cur = "";
+    } else {
+      cur += ch;
+    }
+  }
+  fields.push(cur.trim());
+  return fields;
+}
+
 function lerCSV(path) {
   const content = fs
     .readFileSync(path, "utf-8")
-    .replace(/^\uFEFF/, "") // remove BOM UTF-8
-    .replace(/\r/g, ""); // normaliza quebras de linha Windows
+    .replace(/^\uFEFF/, "")
+    .replace(/\r/g, "");
   const lines = content.trim().split("\n");
   const sep = lines[0].includes(";") ? ";" : ",";
-  const headers = lines[0].split(sep).map(normalizarHeader);
+  const headers = parseLinha(lines[0], sep).map(normalizarHeader);
   return lines.slice(1).map((line) => {
-    const values = line.split(sep);
-    return Object.fromEntries(headers.map((h, i) => [h, values[i]?.trim()]));
+    const values = parseLinha(line, sep);
+    return Object.fromEntries(headers.map((h, i) => [h, values[i] ?? ""]));
   });
 }
 
@@ -35,10 +64,10 @@ function lerCSVBuffer(buffer) {
     .replace(/\r/g, "");
   const lines = content.trim().split("\n");
   const sep = lines[0].includes(";") ? ";" : ",";
-  const headers = lines[0].split(sep).map(normalizarHeader);
+  const headers = parseLinha(lines[0], sep).map(normalizarHeader);
   return lines.slice(1).map((line) => {
-    const values = line.split(sep);
-    return Object.fromEntries(headers.map((h, i) => [h, values[i]?.trim()]));
+    const values = parseLinha(line, sep);
+    return Object.fromEntries(headers.map((h, i) => [h, values[i] ?? ""]));
   });
 }
 
