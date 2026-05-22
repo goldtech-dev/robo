@@ -124,9 +124,22 @@ async function uploadImagem(driver, item) {
       throw new Error("Nenhuma key de imagem informada no CSV para esta peça.");
     }
 
-    // 1. Pesquisar pela referência
-    const campoBusca = await driver.findElement(By.id("Descricao"));
-    await driver.sleep(200);
+    // 1. Garantir que está na tela de listagem (campo busca + botão pesquisar visíveis)
+    await driver.wait(
+      until.elementLocated(By.css('button.btn-yellow[data-func^="pesquisapeca"]')),
+      10000,
+    );
+    const campoBusca = await driver.wait(
+      until.elementLocated(By.id("Descricao")),
+      5000,
+    );
+    // Confirmar que é o campo da listagem (não o textarea de edição da peça)
+    const tagName = await campoBusca.getTagName();
+    if (tagName.toLowerCase() !== "input") {
+      throw new Error(
+        "Campo #Descricao encontrado não é um input — robô pode estar na tela errada.",
+      );
+    }
     await campoBusca.clear();
     await driver.sleep(200);
     await campoBusca.sendKeys(item.mini_descricao);
@@ -274,7 +287,7 @@ async function uploadImagem(driver, item) {
 
     await driver.wait(
       until.elementLocated(By.css("div.alert-success, div.alert-danger")),
-      10000,
+      8000,
     );
 
     const alertEl = await driver.findElement(
@@ -283,9 +296,16 @@ async function uploadImagem(driver, item) {
     const alertClass = await alertEl.getAttribute("class");
     const sucesso = alertClass.includes("alert-success");
 
-    await driver.findElement(By.css("a.is-backbtn")).click();
+    // Aguarda o botão voltar ficar visível e clicável (após animação do alert terminar)
+    const backBtn = await driver.wait(
+      until.elementIsVisible(
+        await driver.findElement(By.css("a.is-backbtn")),
+      ),
+      8000,
+    );
+    await driver.wait(until.elementIsEnabled(backBtn), 3000);
+    await backBtn.click();
     await driver.wait(until.elementLocated(By.id("Descricao")), 10000);
-    await driver.sleep(300);
 
     return sucesso;
   } finally {
