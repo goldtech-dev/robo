@@ -185,11 +185,19 @@ async function uploadImagem(driver, item) {
     }, 8000).catch(() => {});
     await driver.sleep(300);
 
-    // 4. Clicar no botão editar via JS (evita intercepção por preload residual)
-    const btnEditar = await driver.findElement(
-      By.css('a.is-color3[data-func^="editapeca"]'),
+    // 4. Clicar no botão editar (scroll + click normal para disparar eventos do Bootstrap)
+    const btnEditar = await driver.wait(
+      until.elementIsVisible(
+        await driver.findElement(By.css('a.is-color3[data-func^="editapeca"]')),
+      ),
+      8000,
     );
-    await driver.executeScript("arguments[0].click();", btnEditar);
+    await driver.executeScript(
+      "arguments[0].scrollIntoView({block:'center'});",
+      btnEditar,
+    );
+    await driver.sleep(200);
+    await btnEditar.click();
 
     // 5. Aguardar tela de edição carregar
     await driver.wait(
@@ -214,10 +222,18 @@ async function uploadImagem(driver, item) {
       const tmpPath = await salvarTmp(bufferResized, nomeBase);
       tmpFiles.push(tmpPath);
 
-      const btnSubirImg = await driver.findElement(
-        By.css('a[data-func^="subirimgpeca"]'),
+      const btnSubirImg = await driver.wait(
+        until.elementIsVisible(
+          await driver.findElement(By.css('a[data-func^="subirimgpeca"]')),
+        ),
+        8000,
       );
-      await driver.executeScript("arguments[0].click();", btnSubirImg);
+      await driver.executeScript(
+        "arguments[0].scrollIntoView({block:'center'});",
+        btnSubirImg,
+      );
+      await driver.sleep(300);
+      await btnSubirImg.click();
       await driver.sleep(2000);
 
       const inputFilePrincipal = await driver.wait(
