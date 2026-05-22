@@ -243,17 +243,29 @@ async function uploadImagem(driver, item) {
     }
 
     // === ATIVAR NO SITE ===
-    const checkboxSite = await driver
-      .findElement(By.css("input[type=checkbox]"))
-      .catch(() =>
-        driver.findElement(
-          By.xpath('//label[contains(text(),"Site")]/../input'),
-        ),
-      );
+    const valorContratado = await driver
+      .findElement(By.id("Valor_Contratado"))
+      .getAttribute("value")
+      .catch(() => "");
 
-    const isChecked = await checkboxSite.isSelected();
-    if (!isChecked) {
-      await checkboxSite.click();
+    const valorNumerico = parseFloat(
+      (valorContratado || "").replace(/\./g, "").replace(",", "."),
+    );
+    const temPreco = !isNaN(valorNumerico) && valorNumerico > 0;
+
+    if (temPreco) {
+      const checkboxSite = await driver
+        .findElement(By.id("Site"))
+        .catch(() =>
+          driver.findElement(
+            By.xpath('//label[contains(text(),"Site")]/../input'),
+          ),
+        );
+
+      const isChecked = await checkboxSite.isSelected();
+      if (!isChecked) {
+        await checkboxSite.click();
+      }
     }
 
     await driver
