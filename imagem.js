@@ -204,15 +204,7 @@ async function uploadImagem(driver, item) {
       until.elementLocated(By.css('a[data-func^="subirimgpeca"]')),
       12000,
     );
-    // Aguarda preload da tela de edição sumir antes de interagir
-    await driver.wait(async () => {
-      const preloads = await driver.findElements(By.css("div.preload-fix"));
-      for (const el of preloads) {
-        const visible = await el.isDisplayed().catch(() => false);
-        if (visible) return false;
-      }
-      return true;
-    }, 10000).catch(() => {});
+    await driver.sleep(500);
 
     // === UPLOAD IMAGEM PRINCIPAL ===
     if (keyPrincipal) {
@@ -222,11 +214,8 @@ async function uploadImagem(driver, item) {
       const tmpPath = await salvarTmp(bufferResized, nomeBase);
       tmpFiles.push(tmpPath);
 
-      const btnSubirImg = await driver.wait(
-        until.elementIsVisible(
-          await driver.findElement(By.css('a[data-func^="subirimgpeca"]')),
-        ),
-        8000,
+      const btnSubirImg = await driver.findElement(
+        By.css('a[data-func^="subirimgpeca"]'),
       );
       await driver.executeScript(
         "arguments[0].scrollIntoView({block:'center'});",
@@ -285,9 +274,11 @@ async function uploadImagem(driver, item) {
       );
       const btnExtra = botoesExtras[botoesExtras.length - 1];
       await driver.executeScript(
-        "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();",
+        "arguments[0].scrollIntoView({block:'center'});",
         btnExtra,
       );
+      await driver.sleep(300);
+      await btnExtra.click();
       await driver.sleep(2000);
 
       const inputFileExtra = await driver.wait(
