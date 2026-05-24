@@ -100,15 +100,32 @@ async function limparArquivos(caminhos) {
   }
 }
 
+async function aguardarPreloader(driver, timeout = 20000) {
+  await driver.wait(async () => {
+    const overlays = await driver.findElements(
+      By.css("div.admin-conteudo-wrap-overlay.is-loading"),
+    );
+    if (overlays.length > 0) return false;
+    const seletores = ["div.is-preloader", "div.preload-fix"];
+    for (const sel of seletores) {
+      const els = await driver.findElements(By.css(sel));
+      for (const el of els) {
+        const visible = await el.isDisplayed().catch(() => false);
+        if (visible) return false;
+      }
+    }
+    return true;
+  }, timeout);
+}
+
 async function fecharResponseModal(driver) {
-  // Aguarda o modal aparecer e clica no X via JS
   try {
-    await driver.sleep(2500);
+    await driver.sleep(1500);
     await driver.executeScript(`
       var btn = document.querySelector('#responsemodal .close[data-dismiss="modal"]');
       if (btn) btn.click();
     `);
-    await driver.sleep(600);
+    await driver.sleep(400);
   } catch (_) {}
 }
 
@@ -124,48 +141,35 @@ async function uploadImagem(driver, item) {
       throw new Error("Nenhuma key de imagem informada no CSV para esta peça.");
     }
 
-    // 1. Garantir que está na tela de listagem — aguarda preload sumir e campo ser um input
-    await driver.wait(
-      until.elementLocated(By.css('button.btn-yellow[data-func^="pesquisapeca"]')),
-      10000,
-    );
-    // Aguarda div de preload desaparecer antes de interagir
-    await driver.wait(async () => {
-      const preloads = await driver.findElements(By.css("div.preload-fix"));
-      for (const el of preloads) {
-        const visible = await el.isDisplayed().catch(() => false);
-        if (visible) return false;
-      }
-      return true;
-    }, 10000).catch(() => {});
-
-    const campoBusca = await driver.wait(
-      until.elementLocated(By.id("Descricao")),
-      5000,
-    );
-    // Se #Descricao for textarea, ainda está na tela de edição — aguarda navegação
-    const tagName = await campoBusca.getTagName();
-    if (tagName.toLowerCase() !== "input") {
-      // Tenta clicar em voltar e aguardar a listagem
-      await driver.findElement(By.css("a.is-backbtn")).click().catch(() => {});
+    // Garantir que está na listagem e sem preloader
+    // Se a página travar, faz refresh e aguarda recarregar
+    try {
       await driver.wait(
-        until.elementLocated(By.css('button.btn-yellow[data-func^="pesquisapeca"]')),
-        10000,
+        until.elementLocated(
+          By.css('button.btn-yellow[data-func^="pesquisapeca"]'),
+        ),
+        5000,
       );
-      await driver.wait(async () => {
-        const preloads = await driver.findElements(By.css("div.preload-fix"));
-        for (const el of preloads) {
-          const visible = await el.isDisplayed().catch(() => false);
-          if (visible) return false;
-        }
-        return true;
-      }, 8000).catch(() => {});
+      await aguardarPreloader(driver);
+    } catch (_) {
+      await driver.navigate().refresh();
+      await driver.wait(
+        until.elementLocated(
+          By.css('button.btn-yellow[data-func^="pesquisapeca"]'),
+        ),
+        20000,
+      );
+      await aguardarPreloader(driver);
     }
 
-    const campoBuscaFinal = await driver.findElement(By.id("Descricao"));
-    await campoBuscaFinal.clear();
+    // 1. Pesquisar pela referência — usa o input dentro do form da listagem, não o textarea da edição
+    const campoBusca = await driver.findElement(
+      By.css('form input#Descricao, input#Descricao[type="text"]'),
+    );
     await driver.sleep(200);
-    await campoBuscaFinal.sendKeys(item.mini_descricao);
+    await campoBusca.clear();
+    await driver.sleep(200);
+    await campoBusca.sendKeys(item.mini_descricao);
     await driver.sleep(500);
 
     // 2. Clicar em Pesquisar
@@ -173,37 +177,21 @@ async function uploadImagem(driver, item) {
       .findElement(By.css('button.btn-yellow[data-func^="pesquisapeca"]'))
       .click();
 
-    // 3. Aguardar resultados e preload sumir
+    // 3. Aguardar resultados
     await driver.wait(until.elementLocated(By.css("table tbody tr")), 8000);
-    await driver.wait(async () => {
-      const preloads = await driver.findElements(By.css("div.preload-fix"));
-      for (const el of preloads) {
-        const visible = await el.isDisplayed().catch(() => false);
-        if (visible) return false;
-      }
-      return true;
-    }, 8000).catch(() => {});
-    await driver.sleep(300);
+    await driver.sleep(500);
 
-    // 4. Clicar no botão editar (scroll + click normal para disparar eventos do Bootstrap)
-    const btnEditar = await driver.wait(
-      until.elementIsVisible(
-        await driver.findElement(By.css('a.is-color3[data-func^="editapeca"]')),
-      ),
-      8000,
-    );
-    await driver.executeScript(
-      "arguments[0].scrollIntoView({block:'center'});",
-      btnEditar,
-    );
-    await driver.sleep(200);
-    await btnEditar.click();
+    // 4. Clicar no botão editar (lápis)
+    await driver
+      .findElement(By.css('a.is-color3[data-func^="editapeca"]'))
+      .click();
 
-    // 5. Aguardar tela de edição carregar
+    // 5. Aguardar tela de edição carregar e preloader sumir
     await driver.wait(
       until.elementLocated(By.css('a[data-func^="subirimgpeca"]')),
       12000,
     );
+    await aguardarPreloader(driver);
     await driver.sleep(500);
 
     // === UPLOAD IMAGEM PRINCIPAL ===
@@ -214,14 +202,10 @@ async function uploadImagem(driver, item) {
       const tmpPath = await salvarTmp(bufferResized, nomeBase);
       tmpFiles.push(tmpPath);
 
+      await aguardarPreloader(driver);
       const btnSubirImg = await driver.findElement(
         By.css('a[data-func^="subirimgpeca"]'),
       );
-      await driver.executeScript(
-        "arguments[0].scrollIntoView({block:'center'});",
-        btnSubirImg,
-      );
-      await driver.sleep(300);
       await btnSubirImg.click();
       await driver.sleep(2000);
 
@@ -241,18 +225,6 @@ async function uploadImagem(driver, item) {
         .findElement(By.css('a.fileinput-upload[href*="img_pecas"]'))
         .click();
 
-      await driver
-        .wait(
-          until.stalenessOf(
-            await driver
-              .findElement(By.css(".modal-backdrop"))
-              .catch(() => ({ isStale: () => true })),
-          ),
-          15000,
-        )
-        .catch(() => {});
-
-      // Fechar modal de sucesso clicando no X via JS
       await fecharResponseModal(driver);
     }
 
@@ -268,17 +240,14 @@ async function uploadImagem(driver, item) {
         tmpPaths.push(tmpPath);
       }
 
-      // Abrir modal de extras uma vez e enviar todos os arquivos
       const botoesExtras = await driver.findElements(
         By.css('a[data-func^="geremimgpeca"]'),
       );
       const btnExtra = botoesExtras[botoesExtras.length - 1];
       await driver.executeScript(
-        "arguments[0].scrollIntoView({block:'center'});",
+        "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();",
         btnExtra,
       );
-      await driver.sleep(300);
-      await btnExtra.click();
       await driver.sleep(2000);
 
       const inputFileExtra = await driver.wait(
@@ -290,7 +259,6 @@ async function uploadImagem(driver, item) {
         inputFileExtra,
       );
 
-      // sendKeys múltiplas vezes no mesmo input acumula os arquivos
       for (const tmpPath of tmpPaths) {
         await inputFileExtra.sendKeys(tmpPath);
         await driver.sleep(300);
@@ -305,7 +273,7 @@ async function uploadImagem(driver, item) {
       await fecharResponseModal(driver);
     }
 
-    // === ATIVAR NO SITE ===
+    // === ATIVAR NO SITE (apenas se tiver preço) ===
     const valorContratado = await driver
       .findElement(By.id("Valor_Contratado"))
       .getAttribute("value")
@@ -346,11 +314,9 @@ async function uploadImagem(driver, item) {
     const alertClass = await alertEl.getAttribute("class");
     const sucesso = alertClass.includes("alert-success");
 
-    // Aguarda o botão voltar ficar visível e clicável (após animação do alert terminar)
+    // Aguarda botão voltar ficar visível após animação do alert
     const backBtn = await driver.wait(
-      until.elementIsVisible(
-        await driver.findElement(By.css("a.is-backbtn")),
-      ),
+      until.elementIsVisible(await driver.findElement(By.css("a.is-backbtn"))),
       8000,
     );
     await driver.wait(until.elementIsEnabled(backBtn), 3000);
@@ -360,6 +326,14 @@ async function uploadImagem(driver, item) {
     return sucesso;
   } finally {
     await limparArquivos(tmpFiles);
+    // Se ainda estiver na tela de edição (is-backbtn visível), fechar antes do próximo item
+    try {
+      const backBtns = await driver.findElements(By.css("a.is-backbtn"));
+      if (backBtns.length > 0) {
+        const visivel = await backBtns[0].isDisplayed().catch(() => false);
+        if (visivel) await backBtns[0].click();
+      }
+    } catch (_) {}
   }
 }
 
